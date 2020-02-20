@@ -1,11 +1,7 @@
 #![allow(dead_code)]
-extern crate clap;
-extern crate ipnet;
-extern crate prettytable;
-extern crate serde;
+
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_yaml;
 
 mod addrport;
 mod configuration;
