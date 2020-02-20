@@ -1,17 +1,16 @@
 use std::fmt;
 
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AddrPort {
     address: String,
-    port: u16
+    port: u16,
 }
 
 impl AddrPort {
     pub fn new<A: Into<String>>(address: A, port: u16) -> AddrPort {
         AddrPort {
             address: address.into(),
-            port: port
+            port: port,
         }
     }
 
@@ -23,7 +22,6 @@ impl AddrPort {
         self.port
     }
 }
-
 
 impl fmt::Display for AddrPort {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
