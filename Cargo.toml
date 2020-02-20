@@ -6,7 +6,7 @@ repository = "https://github.com/peperunas/wireguard-configure"
 description = "Command-line configuration manager for wireguard"
 license = "Apache-2.0"
 readme = "README.md"
-
+edition = "2018"
 
 [dependencies]
 clap = "2.32"
