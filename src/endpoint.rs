@@ -1,4 +1,4 @@
-use addrport::AddrPort;
+use crate::addrport::AddrPort;
 use ipnet::Ipv4Net;
 use std::net::Ipv4Addr;
 use std::io::Write;
@@ -14,7 +14,7 @@ fn gen_keys() -> (String, String) {
     let privkey =
         String::from_utf8(output.stdout).unwrap()
             .trim()
-            .trim_left()
+            .trim_start()
             .to_string();
 
     let mut command = Command::new("wg")
@@ -37,7 +37,7 @@ fn gen_keys() -> (String, String) {
     let pubkey =
         String::from_utf8(output.stdout).unwrap()
             .trim()
-            .trim_left()
+            .trim_start()
             .to_string();
 
     (privkey, pubkey)

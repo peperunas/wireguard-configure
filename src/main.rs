@@ -12,10 +12,10 @@ mod configuration;
 mod endpoint;
 
 
-use addrport::AddrPort;
+use crate::addrport::AddrPort;
 use clap::{Arg, App, SubCommand};
-use configuration::Configuration;
-use endpoint::{EndPoint, Router};
+use crate::configuration::Configuration;
+use crate::endpoint::{EndPoint, Router};
 use ipnet::Ipv4Net;
 use prettytable::{Table, cell::Cell, row::Row};
 use std::net::Ipv4Addr;
