@@ -4,11 +4,8 @@ use std::io::Write;
 use std::net::Ipv4Addr;
 use std::process::{Command, Stdio};
 
-fn gen_keys() -> (String, String) {
-    let output = Command::new("wg")
-        .args(&["genkey"])
-        .output()
-        .expect("Failed to execute wg genkey");
+fn gen_keys() -> Result<(String, String), std::io::Error> {
+    let output = Command::new("wg").args(&["genkey"]).output()?;
 
     let privkey = String::from_utf8(output.stdout)
         .unwrap()
@@ -20,19 +17,15 @@ fn gen_keys() -> (String, String) {
         .args(&["pubkey"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .spawn()
-        .expect("Failed to spawn wg pubkey");
+        .spawn()?;
 
     command
         .stdin
         .as_mut()
         .expect("Failed to get stdin for wg pubkey")
-        .write_all(privkey.as_bytes())
-        .expect("Failed to write privkey to wg pubkey");
+        .write_all(privkey.as_bytes())?;
 
-    let output = command
-        .wait_with_output()
-        .expect("Failed to get output for wg pubkey");
+    let output = command.wait_with_output()?;
 
     let pubkey = String::from_utf8(output.stdout)
         .unwrap()
@@ -40,7 +33,7 @@ fn gen_keys() -> (String, String) {
         .trim_start()
         .to_string();
 
-    (privkey, pubkey)
+    Ok((privkey, pubkey))
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -58,7 +51,8 @@ impl Router {
         internal_address: Ipv4Addr,
         external_address: AddrPort,
     ) -> Router {
-        let (private_key, public_key) = gen_keys();
+        let (private_key, public_key) = gen_keys().expect("Error while generating key pair.");
+
         Router {
             name: name.into(),
             private_key: private_key,
@@ -79,23 +73,28 @@ impl Router {
     pub fn name(&self) -> &str {
         &self.name
     }
+
     pub fn private_key(&self) -> &str {
         &self.private_key
     }
+
     pub fn public_key(&self) -> &str {
         &self.public_key
     }
+
     pub fn external_address(&self) -> &AddrPort {
         &self.external_address
     }
+
     pub fn internal_address(&self) -> &Ipv4Addr {
         &self.internal_address
     }
 
     pub fn interface(&self) -> String {
         let mut lines: Vec<String> = Vec::new();
+
+        lines.push(format!("# {}", self.name()));
         lines.push("[Interface]".to_string());
-        lines.push(format!("# name: {}", self.name()));
         lines.push(format!("PrivateKey = {}", self.private_key()));
         lines.push(format!("ListenPort = {}", self.external_address().port()));
         lines.join("\n")
@@ -103,10 +102,12 @@ impl Router {
 
     pub fn peer(&self, of: &EndPoint, allowed_ips: &[Ipv4Net]) -> String {
         let mut lines: Vec<String> = Vec::new();
-        lines.push("[Peer]".to_string());
+
         lines.push(format!("# {}", self.name()));
+        lines.push("[Peer]".to_string());
         lines.push(format!("PublicKey = {}", self.public_key()));
         lines.push(format!("Endpoint = {}", self.external_address()));
+
         if let Some(keepalive) = of.persistent_keepalive() {
             lines.push(format!("PersistentKeepalive = {}", keepalive));
         }
@@ -136,7 +137,8 @@ pub struct EndPoint {
 
 impl EndPoint {
     pub fn new<S: Into<String>>(name: S, internal_address: Ipv4Addr) -> EndPoint {
-        let (private_key, public_key) = gen_keys();
+        let (private_key, public_key) = gen_keys().expect("Error while generating key pair.");
+        
         EndPoint {
             name: name.into(),
             private_key: Some(private_key),
@@ -190,18 +192,23 @@ impl EndPoint {
     pub fn name(&self) -> &str {
         &self.name
     }
+    
     pub fn private_key(&self) -> Option<&str> {
         self.private_key.as_ref().map(|s| s.as_str())
     }
+    
     pub fn public_key(&self) -> &str {
         &self.public_key
     }
+
     pub fn external_address(&self) -> Option<&AddrPort> {
         self.external_address.as_ref()
     }
+
     pub fn internal_address(&self) -> &Ipv4Addr {
         &self.internal_address
     }
+
     pub fn allowed_ips(&self) -> Vec<Ipv4Net> {
         if !self.allowed_ips.is_empty() {
             self.allowed_ips.clone()
@@ -210,29 +217,36 @@ impl EndPoint {
                 .expect("Failed to make Ipv4Net for allowed_ips()")]
         }
     }
+
     pub fn persistent_keepalive(&self) -> Option<usize> {
         self.persistent_keepalive.clone()
     }
 
     pub fn interface(&self) -> String {
         let mut lines: Vec<String> = Vec::new();
+        
+        lines.push(format!("# {}", self.name()));
         lines.push("[Interface]".to_string());
-        lines.push(format!("# name: {}", self.name()));
         lines.push(format!(
             "PrivateKey = {}",
             self.private_key().unwrap_or("USER_SUPPLIED")
         ));
+        lines.push(format!("Address = {}", self.internal_address));
+
         if let Some(external_address) = self.external_address() {
             lines.push(format!("ListenPort = {}", external_address.port()));
         }
+
         lines.join("\n")
     }
 
     pub fn peer(&self) -> String {
         let mut lines: Vec<String> = Vec::new();
-        lines.push("[Peer]".to_string());
+
         lines.push(format!("# {}", self.name()));
+        lines.push("[Peer]".to_string());
         lines.push(format!("PublicKey = {}", self.public_key()));
+        
         if let Some(external_address) = self.external_address() {
             lines.push(format!("Endpoint = {}", external_address));
         }
