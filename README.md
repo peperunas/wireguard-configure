@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/endeav0r/wireguard-configuration.svg?branch=master)](https://travis-ci.org/endeav0r/wireguard-configuration)
-
 # wireguard-configure
 
 `wireguard-configure` is a command-line utility to help manage wireguard configurations. It assumes a basic setup with one node acting as a, "Router," and several clients which connect and route traffic between the central router node. It allows you to generate and dump wireguard configurations, and bash scripts which also configure interfaces and routes.
@@ -133,40 +131,6 @@ $ wireguard-configure test.conf --list
 We can now dump ready-to-go configs.
 
 ```
-$ wireguard-configure test.conf router-config --linux-script
-cat > vpn.conf <<EOF
-[Interface]
-# name: vpn-router
-PrivateKey = ADsIErTzl7FaGDI614/MM6Y4YL+edr6v1ls314Fx4Vc=
-ListenPort = 47654
-[Peer]
-# client-a
-PublicKey = QEtcp4V4c79HH1aCGpZy237k96HU0thzHD66100upTQ=
-AllowedIPs = 10.0.1.0/24
-[Peer]
-# client-b
-PublicKey = TwUOO10hyrzdwGZAZoFS5yfPsaVVnVYEJWTtLMD+d2M=
-AllowedIPs = 10.0.2.0/24
-[Peer]
-# test-net
-PublicKey = bZIZkHc8vKjT9oeuVtEOYMbR0bncK23m1DxVuch8SVo=
-AllowedIPs = 10.0.3.0/24
-[Peer]
-# test-net2
-PublicKey = 5VXegPNsoWLXp0sNdy0A2UovRXM0xt3lSL7UmsXtISs=
-AllowedIPs = 10.0.10.10/32
-EOF
-ip link del dev wg0
-ip link add dev wg0 type wireguard
-ip address add dev wg0 10.0.0.1/32
-ip link set up dev wg0
-route add 10.0.1.0 255.255.255.0 dev wg0
-route add 10.0.2.0 255.255.255.0 dev wg0
-route add 10.0.3.0 255.255.255.0 dev wg0
-route add 10.0.10.10 255.255.255.255 dev wg0
-```
-
-```
 $ wireguard-configure test.conf client-config test-net
 [Interface]
 # name: test-net
@@ -176,22 +140,4 @@ PrivateKey = yDLYWiwOjO5OUv+TpGuLlAJWgI3u1+C3x4uG2YUcpH8=
 PublicKey = 560oUL8qMUbEFcQRys3tm/IbO8DPz96Oy6xrVlPuIjk=
 Endpoint = vpn.com:47654
 AllowedIPs = 10.0.0.0/24
-$ target/debug/wireguard-configure test.conf client-config test-net --linux-script
-cat > vpn.conf <<EOF
-[Interface]
-# name: test-net
-PrivateKey = yDLYWiwOjO5OUv+TpGuLlAJWgI3u1+C3x4uG2YUcpH8=
-[Peer]
-# vpn-router
-PublicKey = 560oUL8qMUbEFcQRys3tm/IbO8DPz96Oy6xrVlPuIjk=
-Endpoint = vpn.com:47654
-AllowedIPs = 10.0.0.0/24
-EOF
-ip link del dev wg0
-ip link add dev wg0 type wireguard
-ip address add dev wg0 10.0.0.1/32
-ip link set up dev wg0
-route add 10.0.1.0 255.255.255.0 dev wg0
-route add 10.0.2.0 255.255.255.0 dev wg0
-route add 10.0.10.10 255.255.255.255 dev wg0
 ```
