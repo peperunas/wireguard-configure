@@ -29,7 +29,8 @@ fn example_configuration() -> Configuration {
     configuration.push_client(
         EndPoint::new("client-a", "10.0.1.1".parse().unwrap())
             .builder_push_allowed_ips("10.0.1.0/24".parse().unwrap())
-            .builder_persistent_keepalive(Some(25)),
+            .builder_persistent_keepalive(Some(25))
+            .builder_dns(Some("10.0.0.1".parse().unwrap())),
     );
 
     configuration.push_client(

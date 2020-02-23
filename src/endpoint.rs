@@ -131,6 +131,7 @@ pub struct EndPoint {
     public_key: String,
     external_address: Option<AddrPort>,
     internal_address: Ipv4Addr,
+    dns: Option<Ipv4Addr>,
     allowed_ips: Vec<Ipv4Net>,
     persistent_keepalive: Option<usize>,
 }
@@ -138,13 +139,13 @@ pub struct EndPoint {
 impl EndPoint {
     pub fn new<S: Into<String>>(name: S, internal_address: Ipv4Addr) -> EndPoint {
         let (private_key, public_key) = gen_keys().expect("Error while generating key pair.");
-        
         EndPoint {
             name: name.into(),
             private_key: Some(private_key),
             public_key: public_key,
             external_address: None,
             internal_address: internal_address,
+            dns: None,
             allowed_ips: Vec::new(),
             persistent_keepalive: None,
         }
@@ -162,6 +163,11 @@ impl EndPoint {
 
     pub fn builder_persistent_keepalive(mut self, keepalive: Option<usize>) -> EndPoint {
         self.persistent_keepalive = keepalive;
+        self
+    }
+
+    pub fn builder_dns(mut self, dns: Option<Ipv4Addr>) -> EndPoint {
+        self.dns = dns;
         self
     }
 
@@ -192,11 +198,9 @@ impl EndPoint {
     pub fn name(&self) -> &str {
         &self.name
     }
-    
     pub fn private_key(&self) -> Option<&str> {
         self.private_key.as_ref().map(|s| s.as_str())
     }
-    
     pub fn public_key(&self) -> &str {
         &self.public_key
     }
@@ -224,7 +228,6 @@ impl EndPoint {
 
     pub fn interface(&self) -> String {
         let mut lines: Vec<String> = Vec::new();
-        
         lines.push(format!("# {}", self.name()));
         lines.push("[Interface]".to_string());
         lines.push(format!(
@@ -232,6 +235,10 @@ impl EndPoint {
             self.private_key().unwrap_or("USER_SUPPLIED")
         ));
         lines.push(format!("Address = {}", self.internal_address));
+
+        if let Some(dns) = self.dns {
+            lines.push(format!("DNS = {}", dns));
+        }
 
         if let Some(external_address) = self.external_address() {
             lines.push(format!("ListenPort = {}", external_address.port()));
@@ -246,7 +253,6 @@ impl EndPoint {
         lines.push(format!("# {}", self.name()));
         lines.push("[Peer]".to_string());
         lines.push(format!("PublicKey = {}", self.public_key()));
-        
         if let Some(external_address) = self.external_address() {
             lines.push(format!("Endpoint = {}", external_address));
         }
