@@ -16,10 +16,8 @@ pub struct Arguments {
 #[derive(StructOpt)]
 pub enum SubCommand {
     /// Generate an example configuration file
-    #[structopt(name = "generate-example")]
     GenerateExample,
     /// List clients in this configuration
-    #[structopt(name = "list")]
     List,
     /// Add a client to the configuration
     AddClient {
