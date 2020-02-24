@@ -14,7 +14,7 @@ edition = "2018"
 [dependencies]
 clap = "2.32"
 error-chain = "0.12"
-ipnet = { version = "1.2.1", features = ["with-serde"] }
+ipnet = { version = "2.2", features = ["serde"] }
 prettytable-rs = "0.7.0"
 serde = "1.0"
 serde_derive = "1.0"

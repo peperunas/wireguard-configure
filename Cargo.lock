@@ -111,7 +111,7 @@ dependencies = [
 
 [[package]]
 name = "ipnet"
-version = "1.2.1"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "serde 1.0.70 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -404,7 +404,7 @@ version = "0.1.1"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ipnet 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ipnet 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "prettytable-rs 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.70 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.70 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -435,7 +435,7 @@ dependencies = [
 "checksum encode_unicode 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c088ec0ed2282dcd054f2c124c0327f953563e6c75fdc6ff5141779596289830"
 "checksum error-chain 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)" = "07e791d3be96241c77c43846b665ef1384606da2cd2a48730abe606a12906e02"
 "checksum heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "20564e78d53d2bb135c343b3f47714a56af2061f1c928fdb541dc7b9fdd94205"
-"checksum ipnet 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "47c8f4fd097f991e80ccb75c27b12e60d2836f777cad1127f2a64cd5dbee9ad8"
+"checksum ipnet 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a859057dc563d1388c1e816f98a1892629075fc046ed06e845b883bb8b2916fb"
 "checksum lazy_static 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "fb497c35d362b6a331cfd94956a07fc2c78a4604cdbee844a81170386b996dd3"
 "checksum libc 0.2.42 (registry+https://github.com/rust-lang/crates.io-index)" = "b685088df2b950fccadf07a7187c8ef846a959c142338a48f9dc0b94517eb5f1"
 "checksum linked-hash-map 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "70fb39025bc7cdd76305867c4eccf2f2dcf6e9a57f5b21a93e1c2d86cd03ec9e"
