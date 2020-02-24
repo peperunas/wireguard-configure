@@ -88,9 +88,6 @@ OPTIONS:
     -d, --dns <dns>                                      The DNS server to use
     -i, --internal-address <internal-address>            Internal address for the new client
     -p, --persistent-keepalive <persistent-keepalive>    Persistent keepalive for the client
-        --priv <private-key>
-            Use the given private key, do not use an auto-generated key-pair
-
         --pub <public-key>                               Use the given public key, do not use an auto-generated key-pair
 
 ARGS:

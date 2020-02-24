@@ -58,10 +58,9 @@ fn main() {
             client_name,
             internal_address,
             allowed_ips,
-            dns: _,
+            dns,
             persistent_keepalive,
             public_key,
-            private_key: _,
         } => {
             // TODO: fixme
             let mut configuration =
@@ -76,7 +75,7 @@ fn main() {
                 exit(1);
             }
 
-            let mut endpoint = Client::new(client_name, internal_address);
+            let mut endpoint = Client::new(client_name, internal_address).builder_dns(dns);
 
             if let Some(public_key) = public_key {
                 endpoint.set_private_key(None);
@@ -90,8 +89,6 @@ fn main() {
             for allowed_ip in allowed_ips {
                 endpoint.push_allowed_ip(allowed_ip);
             }
-
-            // TODO: Add DNS and private key handling
 
             configuration.push_client(endpoint);
 

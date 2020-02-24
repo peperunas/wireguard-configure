@@ -39,9 +39,6 @@ pub enum SubCommand {
         /// Use the given public key, do not use an auto-generated key-pair
         #[structopt(long = "pub")]
         public_key: Option<String>,
-        /// Use the given private key, do not use an auto-generated key-pair
-        #[structopt(long = "priv")]
-        private_key: Option<String>,
     },
     /// Remove a client from the configuration
     RemoveClient {
