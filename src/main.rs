@@ -10,7 +10,7 @@ mod endpoint;
 
 use crate::addrport::AddrPort;
 use crate::configuration::Configuration;
-use crate::endpoint::{EndPoint, Router};
+use crate::endpoint::{Client, Router};
 use args::{Arguments, SubCommand};
 use prettytable::{cell::Cell, row::Row, Table};
 use std::path::Path;
@@ -27,14 +27,14 @@ fn example_configuration() -> Configuration {
     let mut configuration = Configuration::new(router);
 
     configuration.push_client(
-        EndPoint::new("client-a", "10.0.1.1".parse().unwrap())
+        Client::new("client-a", "10.0.1.1".parse().unwrap())
             .builder_push_allowed_ips("10.0.1.0/24".parse().unwrap())
             .builder_persistent_keepalive(Some(25))
             .builder_dns(Some("10.0.0.1".parse().unwrap())),
     );
 
     configuration.push_client(
-        EndPoint::new("client-b", "10.0.2.1".parse().unwrap())
+        Client::new("client-b", "10.0.2.1".parse().unwrap())
             .builder_push_allowed_ips("10.0.2.0/24".parse().unwrap())
             .builder_persistent_keepalive(Some(25)),
     );
@@ -62,13 +62,13 @@ fn main() {
             if configuration
                 .clients()
                 .iter()
-                .any(|client| client.name() == client_name)
+                .any(|client| client.name == client_name)
             {
                 eprintln!("Client {} already exists", client_name);
                 exit(1);
             }
 
-            let mut endpoint = EndPoint::new(client_name, internal_address);
+            let mut endpoint = Client::new(client_name, internal_address);
 
             if let Some(public_key) = public_key {
                 endpoint.set_private_key(None);
@@ -118,18 +118,18 @@ fn main() {
             ]));
 
             table.add_row(Row::new(vec![
-                Cell::new(configuration.router().name()),
-                Cell::new(&format!("{}", configuration.router().internal_address())),
+                Cell::new(&configuration.router.name),
+                Cell::new(&format!("{}", configuration.router.internal_address)),
                 Cell::new(""),
             ]));
 
             for client in configuration.clients() {
                 table.add_row(Row::new(vec![
-                    Cell::new(client.name()),
-                    Cell::new(&format!("{}", client.internal_address())),
+                    Cell::new(&client.name),
+                    Cell::new(&format!("{}", client.internal_address)),
                     Cell::new(
                         &client
-                            .allowed_ips()
+                            .allowed_ips
                             .iter()
                             .map(|ip| format!("{}", ip))
                             .collect::<Vec<String>>()
@@ -156,7 +156,7 @@ fn main() {
             println!("{}", configuration.router().interface());
 
             for client in configuration.clients() {
-                println!("{}", client.peer());
+                println!("{}", client.peer(&configuration.router));
             }
         }
     }

@@ -1,4 +1,4 @@
-use crate::endpoint::{EndPoint, Router};
+use crate::endpoint::{Client, Router};
 use ipnet::Ipv4Net;
 use serde_yaml;
 use std::error::Error;
@@ -8,8 +8,8 @@ use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {
-    router: Router,
-    clients: Vec<EndPoint>,
+    pub router: Router,
+    pub clients: Vec<Client>,
 }
 
 impl Configuration {
@@ -39,13 +39,13 @@ impl Configuration {
         }
     }
 
-    pub fn push_client(&mut self, client: EndPoint) {
+    pub fn push_client(&mut self, client: Client) {
         self.clients.push(client);
     }
 
     pub fn remove_client_by_name(&mut self, name: &str) -> bool {
         for i in 0..self.clients.len() {
-            if self.clients[i].name() == name {
+            if self.clients[i].name == name {
                 self.clients.remove(i);
                 return true;
             }
@@ -57,25 +57,31 @@ impl Configuration {
         &self.router
     }
 
-    pub fn clients(&self) -> &[EndPoint] {
+    pub fn clients(&self) -> &[Client] {
         &self.clients
     }
 
-    pub fn client_by_name(&self, name: &str) -> Option<&EndPoint> {
-        self.clients.iter().find(|client| client.name() == name)
+    pub fn client_by_name(&self, name: &str) -> Option<&Client> {
+        self.clients.iter().find(|client| client.name == name)
     }
 
     pub fn all_allowed_ips(&self) -> Vec<Ipv4Net> {
-        self.clients().iter().flat_map(|client| client.allowed_ips.clone()).collect()
+        self.clients()
+            .iter()
+            .flat_map(|client| client.allowed_ips.clone())
+            .collect()
     }
 
     pub fn client_config(&self, name: &str) -> Option<String> {
         let client = self.client_by_name(name)?;
 
-        Some(format!(
-            "{}\n\n{}",
-            client.interface(),
-            self.router.peer(client, &self.all_allowed_ips())
-        ))
+        match client.interface() {
+            Some(interface) => Some(format!(
+                "{}\n\n{}",
+                interface,
+                self.router.peer(client, &self.all_allowed_ips())
+            )),
+            None => None,
+        }
     }
 }
