@@ -38,11 +38,11 @@ fn gen_keys() -> Result<(String, String), std::io::Error> {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Router {
-    name: String,
-    private_key: String,
-    public_key: String,
-    external_address: AddrPort,
-    internal_address: Ipv4Addr,
+    pub name: String,
+    pub private_key: String,
+    pub public_key: String,
+    pub external_address: AddrPort,
+    pub internal_address: Ipv4Addr,
 }
 
 impl Router {
@@ -70,45 +70,25 @@ impl Router {
         self.internal_address = internal_address;
     }
 
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn private_key(&self) -> &str {
-        &self.private_key
-    }
-
-    pub fn public_key(&self) -> &str {
-        &self.public_key
-    }
-
-    pub fn external_address(&self) -> &AddrPort {
-        &self.external_address
-    }
-
-    pub fn internal_address(&self) -> &Ipv4Addr {
-        &self.internal_address
-    }
-
     pub fn interface(&self) -> String {
         let mut lines: Vec<String> = Vec::new();
 
-        lines.push(format!("# {}", self.name()));
+        lines.push(format!("# {}", self.name));
         lines.push("[Interface]".to_string());
-        lines.push(format!("PrivateKey = {}", self.private_key()));
-        lines.push(format!("ListenPort = {}", self.external_address().port()));
+        lines.push(format!("PrivateKey = {}", self.private_key));
+        lines.push(format!("ListenPort = {}", self.external_address.port));
         lines.join("\n")
     }
 
-    pub fn peer(&self, of: &EndPoint, allowed_ips: &[Ipv4Net]) -> String {
+    pub fn peer(&self, of: &Client, allowed_ips: &[Ipv4Net]) -> String {
         let mut lines: Vec<String> = Vec::new();
 
-        lines.push(format!("# {}", self.name()));
+        lines.push(format!("# {}", self.name));
         lines.push("[Peer]".to_string());
-        lines.push(format!("PublicKey = {}", self.public_key()));
-        lines.push(format!("Endpoint = {}", self.external_address()));
+        lines.push(format!("PublicKey = {}", self.public_key));
+        lines.push(format!("Endpoint = {}", self.external_address));
 
-        if let Some(keepalive) = of.persistent_keepalive() {
+        if let Some(keepalive) = of.persistent_keepalive {
             lines.push(format!("PersistentKeepalive = {}", keepalive));
         }
 
@@ -125,54 +105,44 @@ impl Router {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct EndPoint {
+pub struct Client {
     pub name: String,
     pub private_key: Option<String>,
     pub public_key: String,
-    pub external_address: Option<AddrPort>,
     pub internal_address: Ipv4Addr,
     pub dns: Option<Ipv4Addr>,
     pub allowed_ips: Vec<Ipv4Net>,
     pub persistent_keepalive: Option<usize>,
 }
 
-impl EndPoint {
-    pub fn new<S: Into<String>>(name: S, internal_address: Ipv4Addr) -> EndPoint {
+impl Client {
+    pub fn new<S: Into<String>>(name: S, internal_address: Ipv4Addr) -> Client {
         let (private_key, public_key) = gen_keys().expect("Error while generating key pair.");
-        EndPoint {
+
+        Client {
             name: name.into(),
             private_key: Some(private_key),
-            public_key: public_key,
-            external_address: None,
-            internal_address: internal_address,
+            public_key,
+            internal_address,
             dns: None,
             allowed_ips: Vec::new(),
             persistent_keepalive: None,
         }
     }
 
-    pub fn builder_external_address(mut self, external_address: Option<AddrPort>) -> EndPoint {
-        self.external_address = external_address;
-        self
-    }
-
-    pub fn builder_push_allowed_ips(mut self, allowed_ip: Ipv4Net) -> EndPoint {
+    pub fn builder_push_allowed_ips(mut self, allowed_ip: Ipv4Net) -> Client {
         self.allowed_ips.push(allowed_ip);
         self
     }
 
-    pub fn builder_persistent_keepalive(mut self, keepalive: Option<usize>) -> EndPoint {
+    pub fn builder_persistent_keepalive(mut self, keepalive: Option<usize>) -> Client {
         self.persistent_keepalive = keepalive;
         self
     }
 
-    pub fn builder_dns(mut self, dns: Option<Ipv4Addr>) -> EndPoint {
+    pub fn builder_dns(mut self, dns: Option<Ipv4Addr>) -> Client {
         self.dns = dns;
         self
-    }
-
-    pub fn set_external_address(&mut self, external_address: Option<AddrPort>) {
-        self.external_address = external_address;
     }
 
     pub fn set_internal_address(&mut self, internal_address: Ipv4Addr) {
@@ -195,69 +165,36 @@ impl EndPoint {
         self.public_key = public_key;
     }
 
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-    pub fn private_key(&self) -> Option<&str> {
-        self.private_key.as_ref().map(|s| s.as_str())
-    }
-    pub fn public_key(&self) -> &str {
-        &self.public_key
-    }
-
-    pub fn external_address(&self) -> Option<&AddrPort> {
-        self.external_address.as_ref()
-    }
-
-    pub fn internal_address(&self) -> &Ipv4Addr {
-        &self.internal_address
-    }
-
-    pub fn allowed_ips(&self) -> Vec<Ipv4Net> {
-        if !self.allowed_ips.is_empty() {
-            self.allowed_ips.clone()
-        } else {
-            vec![Ipv4Net::new(self.internal_address().clone(), 32)
-                .expect("Failed to make Ipv4Net for allowed_ips()")]
-        }
-    }
-
-    pub fn persistent_keepalive(&self) -> Option<usize> {
-        self.persistent_keepalive.clone()
-    }
-
-    pub fn interface(&self) -> String {
-        let mut lines: Vec<String> = Vec::new();
-        lines.push(format!("# {}", self.name()));
-        lines.push("[Interface]".to_string());
-        lines.push(format!(
-            "PrivateKey = {}",
-            self.private_key().unwrap_or("USER_SUPPLIED")
-        ));
-        lines.push(format!("Address = {}", self.internal_address));
-
-        if let Some(dns) = self.dns {
-            lines.push(format!("DNS = {}", dns));
-        }
-
-        if let Some(external_address) = self.external_address() {
-            lines.push(format!("ListenPort = {}", external_address.port()));
-        }
-
-        lines.join("\n")
-    }
-
-    pub fn peer(&self) -> String {
+    pub fn interface(&self) -> Option<String> {
         let mut lines: Vec<String> = Vec::new();
 
-        lines.push(format!("# {}", self.name()));
+        match &self.private_key {
+            Some(private_key) => {
+                lines.push(format!("# {}", self.name));
+                lines.push("[Interface]".to_string());
+                lines.push(format!("PrivateKey = {}", private_key));
+                lines.push(format!("Address = {}", self.internal_address));
+
+                if let Some(dns) = self.dns {
+                    lines.push(format!("DNS = {}", dns));
+                }
+
+                Some(lines.join("\n"))
+            }
+            None => None,
+        }
+    }
+
+    pub fn peer(&self, router: &Router) -> String {
+        let mut lines: Vec<String> = Vec::new();
+
+        lines.push(format!("# {}", self.name));
         lines.push("[Peer]".to_string());
-        lines.push(format!("PublicKey = {}", self.public_key()));
-
-        if let Some(external_address) = self.external_address() {
-            lines.push(format!("Endpoint = {}", external_address));
-        }
-
+        lines.push(format!("PublicKey = {}", self.public_key));
+        lines.push(format!(
+            "Endpoint = {}:{}",
+            router.external_address.address, router.external_address.port
+        ));
         lines.push(format!(
             "AllowedIPs = {}",
             self.allowed_ips
@@ -266,7 +203,7 @@ impl EndPoint {
                 .collect::<Vec<String>>()
                 .join(", ")
         ));
-        
+
         lines.join("\n")
     }
 }
