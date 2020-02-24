@@ -21,14 +21,13 @@ use structopt::StructOpt;
 
 fn example_configuration() -> Configuration {
     // Router
-    let router_ip: Ipv4Addr = "10.0.1.1".parse().unwrap();
+    let router_ip: Ipv4Net = "10.0.1.1/24".parse().unwrap();
     let router_subnet: Ipv4Net = "10.0.1.0/24".parse().unwrap();
 
     // Client A
     let client_a_ip: Ipv4Addr = "10.0.1.2".parse().unwrap();
-    let client_a_dns = router_ip;
+    let client_a_dns: Ipv4Addr = "10.0.1.1".parse().unwrap();
     let client_a_allowed_ips: Ipv4Net = "0.0.0.0/0".parse().unwrap();
-    
     // Client B
     let client_b_ip: Ipv4Addr = "10.0.1.3".parse().unwrap();
 

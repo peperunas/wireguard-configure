@@ -42,13 +42,13 @@ pub struct Router {
     pub private_key: String,
     pub public_key: String,
     pub external_address: AddrPort,
-    pub internal_address: Ipv4Addr,
+    pub internal_address: Ipv4Net,
 }
 
 impl Router {
     pub fn new<S: Into<String>>(
         name: S,
-        internal_address: Ipv4Addr,
+        internal_address: Ipv4Net,
         external_address: AddrPort,
     ) -> Router {
         let (private_key, public_key) = gen_keys().expect("Error while generating key pair.");
@@ -66,7 +66,7 @@ impl Router {
         self.external_address = external_address;
     }
 
-    pub fn set_internal_address(&mut self, internal_address: Ipv4Addr) {
+    pub fn set_internal_address(&mut self, internal_address: Ipv4Net) {
         self.internal_address = internal_address;
     }
 
@@ -166,7 +166,7 @@ impl Client {
                 lines.push(format!("# {}", self.name));
                 lines.push("[Interface]".to_string());
                 lines.push(format!("PrivateKey = {}", private_key));
-                lines.push(format!("Address = {}", Ipv4Net::from(self.internal_address)));
+                lines.push(format!("Address = {}", self.internal_address));
 
                 if let Some(dns) = self.dns {
                     lines.push(format!("DNS = {}", dns));
