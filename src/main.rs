@@ -60,7 +60,7 @@ fn main() {
             private_key: _,
         } => {
             if configuration
-                .clients()
+                .clients
                 .iter()
                 .any(|client| client.name == client_name)
             {
@@ -99,7 +99,12 @@ fn main() {
                 .client_by_name(&client_name)
                 .expect(&format!("Could not find client {}", client_name));
 
-            println!("{}", configuration.client_config(&client_name, &configuration.router).unwrap());
+            println!(
+                "{}",
+                configuration
+                    .client_config(&client_name, &configuration.router)
+                    .unwrap()
+            );
         }
         SubCommand::GenerateExample => {
             // TODO: properly handle errors
@@ -123,7 +128,7 @@ fn main() {
                 Cell::new(""),
             ]));
 
-            for client in configuration.clients() {
+            for client in configuration.clients {
                 table.add_row(Row::new(vec![
                     Cell::new(&client.name),
                     Cell::new(&format!("{}", client.internal_address)),
@@ -153,9 +158,9 @@ fn main() {
             println!("Client {} removed", client_name);
         }
         SubCommand::RouterConfig => {
-            println!("{}", configuration.router().interface());
+            println!("{}", configuration.router.interface());
 
-            for client in configuration.clients() {
+            for client in configuration.clients {
                 println!("{}", client.peer(&configuration.router));
             }
         }

@@ -53,20 +53,12 @@ impl Configuration {
         false
     }
 
-    pub fn router(&self) -> &Router {
-        &self.router
-    }
-
-    pub fn clients(&self) -> &[Client] {
-        &self.clients
-    }
-
     pub fn client_by_name(&self, name: &str) -> Option<&Client> {
         self.clients.iter().find(|client| client.name == name)
     }
 
     pub fn all_allowed_ips(&self) -> Vec<Ipv4Net> {
-        self.clients()
+        self.clients
             .iter()
             .flat_map(|client| client.allowed_ips.clone())
             .collect()
