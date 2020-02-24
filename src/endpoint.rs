@@ -80,26 +80,18 @@ impl Router {
         lines.join("\n")
     }
 
-    pub fn peer(&self, of: &Client, allowed_ips: &[Ipv4Net]) -> String {
+    pub fn peer(&self, client: &Client) -> String {
         let mut lines: Vec<String> = Vec::new();
 
-        lines.push(format!("# {}", self.name));
+        lines.push(format!("# {}", client.name));
         lines.push("[Peer]".to_string());
-        lines.push(format!("PublicKey = {}", self.public_key));
-        lines.push(format!("Endpoint = {}", self.external_address));
+        lines.push(format!("PublicKey = {}", client.public_key));
 
-        if let Some(keepalive) = of.persistent_keepalive {
+        if let Some(keepalive) = client.persistent_keepalive {
             lines.push(format!("PersistentKeepalive = {}", keepalive));
         }
 
-        lines.push(format!(
-            "AllowedIPs = {}",
-            allowed_ips
-                .into_iter()
-                .map(|ip| format!("{}", ip))
-                .collect::<Vec<String>>()
-                .join(", ")
-        ));
+        lines.push(format!("AllowedIPs = {}", client.internal_address));
         lines.join("\n")
     }
 }

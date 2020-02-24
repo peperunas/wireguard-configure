@@ -174,10 +174,10 @@ fn main() {
             let configuration =
                 Configuration::open(&args.config).expect("Failed to open configuration.");
 
-            println!("{}", configuration.router.interface());
+            println!("{}\n", configuration.router.interface());
 
             for client in configuration.clients {
-                println!("{}", client.peer(&configuration.router));
+                println!("{}\n", configuration.router.peer(&client));
             }
         }
     }
