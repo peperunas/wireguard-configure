@@ -99,7 +99,7 @@ fn main() {
                 .client_by_name(&client_name)
                 .expect(&format!("Could not find client {}", client_name));
 
-            println!("{}", configuration.client_config(&client_name).unwrap());
+            println!("{}", configuration.client_config(&client_name, &configuration.router).unwrap());
         }
         SubCommand::GenerateExample => {
             // TODO: properly handle errors

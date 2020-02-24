@@ -72,15 +72,11 @@ impl Configuration {
             .collect()
     }
 
-    pub fn client_config(&self, name: &str) -> Option<String> {
+    pub fn client_config(&self, name: &str, router: &Router) -> Option<String> {
         let client = self.client_by_name(name)?;
 
         match client.interface() {
-            Some(interface) => Some(format!(
-                "{}\n\n{}",
-                interface,
-                self.router.peer(client, &self.all_allowed_ips())
-            )),
+            Some(interface) => Some(format!("{}\n\n{}", interface, client.peer(&router))),
             None => None,
         }
     }
