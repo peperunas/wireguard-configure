@@ -166,7 +166,7 @@ impl Client {
                 lines.push(format!("# {}", self.name));
                 lines.push("[Interface]".to_string());
                 lines.push(format!("PrivateKey = {}", private_key));
-                lines.push(format!("Address = {}", self.internal_address));
+                lines.push(format!("Address = {}", Ipv4Net::from(self.internal_address)));
 
                 if let Some(dns) = self.dns {
                     lines.push(format!("DNS = {}", dns));
