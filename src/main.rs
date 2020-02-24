@@ -12,30 +12,39 @@ use crate::addrport::AddrPort;
 use crate::configuration::Configuration;
 use crate::endpoint::{Client, Router};
 use args::{Arguments, SubCommand};
+use ipnet::Ipv4Net;
 use prettytable::{cell::Cell, row::Row, Table};
+use std::net::Ipv4Addr;
 use std::path::Path;
 use std::process::exit;
 use structopt::StructOpt;
 
 fn example_configuration() -> Configuration {
-    let router = Router::new(
-        "vpn-router",
-        "10.0.0.1".parse().unwrap(),
-        AddrPort::new("vpn.com", 47654),
-    );
+    // Router
+    let router_ip: Ipv4Addr = "10.0.1.1".parse().unwrap();
+    let router_subnet: Ipv4Net = "10.0.1.0/24".parse().unwrap();
 
+    // Client A
+    let client_a_ip: Ipv4Addr = "10.0.1.2".parse().unwrap();
+    let client_a_dns = router_ip;
+    let client_a_allowed_ips: Ipv4Net = "0.0.0.0/0".parse().unwrap();
+    
+    // Client B
+    let client_b_ip: Ipv4Addr = "10.0.1.3".parse().unwrap();
+
+    let router = Router::new("vpn-router", router_ip, AddrPort::new("vpn.com", 31337));
     let mut configuration = Configuration::new(router);
 
     configuration.push_client(
-        Client::new("client-a", "10.0.1.1".parse().unwrap())
-            .builder_push_allowed_ips("10.0.1.0/24".parse().unwrap())
+        Client::new("client-a", client_a_ip)
+            .builder_push_allowed_ips(client_a_allowed_ips)
             .builder_persistent_keepalive(Some(25))
-            .builder_dns(Some("10.0.0.1".parse().unwrap())),
+            .builder_dns(Some(client_a_dns)),
     );
 
     configuration.push_client(
-        Client::new("client-b", "10.0.2.1".parse().unwrap())
-            .builder_push_allowed_ips("10.0.2.0/24".parse().unwrap())
+        Client::new("client-b", client_b_ip)
+            .builder_push_allowed_ips(router_subnet)
             .builder_persistent_keepalive(Some(25)),
     );
 
