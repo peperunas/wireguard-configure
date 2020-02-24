@@ -126,14 +126,14 @@ impl Router {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct EndPoint {
-    name: String,
-    private_key: Option<String>,
-    public_key: String,
-    external_address: Option<AddrPort>,
-    internal_address: Ipv4Addr,
-    dns: Option<Ipv4Addr>,
-    allowed_ips: Vec<Ipv4Net>,
-    persistent_keepalive: Option<usize>,
+    pub name: String,
+    pub private_key: Option<String>,
+    pub public_key: String,
+    pub external_address: Option<AddrPort>,
+    pub internal_address: Ipv4Addr,
+    pub dns: Option<Ipv4Addr>,
+    pub allowed_ips: Vec<Ipv4Net>,
+    pub persistent_keepalive: Option<usize>,
 }
 
 impl EndPoint {
