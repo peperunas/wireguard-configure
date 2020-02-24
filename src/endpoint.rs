@@ -181,7 +181,7 @@ impl Client {
     pub fn peer(&self, router: &Router) -> String {
         let mut lines: Vec<String> = Vec::new();
 
-        lines.push(format!("# {}", self.name));
+        lines.push(format!("# {}", router.name));
         lines.push("[Peer]".to_string());
         lines.push(format!("PublicKey = {}", self.public_key));
         lines.push(format!(
