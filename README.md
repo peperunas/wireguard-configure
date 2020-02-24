@@ -7,137 +7,153 @@ You must have the commandline tool `wg` accessible through your path. This is us
 Configurations are stored in yaml, and can be modified from the command line, or directly in the yaml file.
 
 ```
-$ wireguard-configure --help
-wireguard-configure 0.0.1
-Alex Eubanks <endeavor@rainbowsandpwnies.com>
-Simple wireguard configuration
+wireguard-configure 0.2.0
+Alex Eubanks <endeavor@rainbowsandpwnies.com>, Giulio De Pasquale <depasquale+github@giugl.io>
 
 USAGE:
-    wireguard-configure [FLAGS] <CONFIG> [SUBCOMMAND]
+    wireguard-configure <config> <SUBCOMMAND>
 
 FLAGS:
-        --example    Generate an example configuration file
     -h, --help       Prints help information
-    -l, --list       List clients in this configuration
     -V, --version    Prints version information
 
 ARGS:
-    <CONFIG>    wireguard-configure configuration file
+    <config>    wireguard-configure configuration file
 
 SUBCOMMANDS:
-    add-client       Add a client to the configuration
-    client-config    Dump client config
-    help             Prints this message or the help of the given subcommand(s)
-    remove-client    Remove a client from the configuration
-    router-config    Dump router config
+    add-client          Add a client to the configuration
+    client-config       Print the client configuration
+    generate-example    Generate an example configuration file
+    help                Prints this message or the help of the given subcommand(s)
+    list                List clients in this configuration
+    remove-client       Remove a client from the configuration
+    router-config       Print the router configuration
 ```
 
-# Example usage:
+# Quick start
 
-Generate an example configuration file, run `wireguard-configure --example <filename>`
+## Generating an example configuration
+Generate an example configuration file, run `wireguard-configure <filename> generate-example`.
+
+The generated configuration file should look like this:
 
 ```
-$ target/debug/wireguard-configure --example test.conf
-Configuration saved to file
-$ cat test.conf
 ---
 router:
   name: "vpn-router"
-  private_key: "ADsIErTzl7FaGDI614/MM6Y4YL+edr6v1ls314Fx4Vc="
-  public_key: "560oUL8qMUbEFcQRys3tm/IbO8DPz96Oy6xrVlPuIjk="
+  private_key: "wPbMYTCgGzfkg3vlt3xoVLhbozRpvVmM8mkm6PFB1Us="
+  public_key: "rQNYShmaF+KI+JdvblFSPxmW5f/GAj7F0qBFwMsztVs="
   external_address:
     address: vpn.com
-    port: 47654
-  internal_address: 10.0.0.1
-  allowed_ips:
-    - 10.0.0.0/24
-  persistent_keepalive: ~
+    port: 31337
+  internal_address: 10.0.1.1/24
 clients:
   - name: "client-a"
-    private_key: "6AXhGpbF36uRQNK3kt8SIwd1WJSGrfsdEnj89SArfls="
-    public_key: "QEtcp4V4c79HH1aCGpZy237k96HU0thzHD66100upTQ="
-    external_address: ~
-    internal_address: 10.0.1.1
+    private_key: "aJQEvc6VUDhGjFr5kHqJaSDMHcVaRFniKHxShx3JiV4="
+    public_key: "a8LCjRe7oLdxLdHS1CmGqG9L813TAnMnnEzRTBXkHzM="
+    internal_address: 10.0.1.2
+    dns: 10.0.1.1
+    allowed_ips:
+      - 0.0.0.0/0
+    persistent_keepalive: 25
+  - name: "client-b"
+    private_key: "mGnpzl6bP/zSJ5x04xNF/AxgHlGTOlPNNCmtRUIyO1U="
+    public_key: "rCMWJp3RMXgx/cgWAohhSYJBG3+SQD2hhFcBd0eVwmg="
+    internal_address: 10.0.1.3
+    dns: ~
     allowed_ips:
       - 10.0.1.0/24
     persistent_keepalive: 25
-  - name: "client-b"
-    private_key: "8EzIJ2g/8xq24d5dvLXTJjNhJKyjQ8Yzg0E5mWhKKFs="
-    public_key: "TwUOO10hyrzdwGZAZoFS5yfPsaVVnVYEJWTtLMD+d2M="
-    external_address: ~
-    internal_address: 10.0.2.1
-    allowed_ips:
-      - 10.0.2.0/24
-    persistent_keepalive: 25
 ```
+
+## Adding a new client
 
 We can add another client with the `add-client` subcommand.
 
 ```
-$ wireguard-configure test.conf add-client --help
-wireguard-configure-add-client 
+wireguard-configure-add-client 0.2.0
 Add a client to the configuration
 
 USAGE:
-    wireguard-configure add-client [OPTIONS] --internal-address <INTERNAL_ADDRESS> --name <NAME>
+    wireguard-configure <config> add-client [OPTIONS] <name> --internal-address <internal-address>
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
 
 OPTIONS:
-    -a, --allowed-ips <ALLOWED_IPS>                    An comma-delimited list of subnets for this client
-    -i, --internal-address <INTERNAL_ADDRESS>          Internal address for the new client
-    -n, --name <NAME>                                  Name for the new client
-    -p, --persitent-keepalive <PERSITENT_KEEPALIVE>    Optional persitent keepalive for the client
+    -a, --allowed-ips <allowed-ips>...
+            A list of subnets to be routed through the VPN for this client (e.g 10.0.0.1/32)
 
-$ wireguard-configure test.conf add-client --name test-net -a 10.0.3.0/24 -i 10.0.3.1 -p 25
-Client added
-$ wireguard-configure test.conf --list
-+------------+------------------+-------------+
-| Name       | Internal Address | Allowed IPs |
-+------------+------------------+-------------+
-| vpn-router | 10.0.0.1         | 10.0.0.0/24 |
-+------------+------------------+-------------+
-| client-a   | 10.0.1.1         | 10.0.1.0/24 |
-+------------+------------------+-------------+
-| client-b   | 10.0.2.1         | 10.0.2.0/24 |
-+------------+------------------+-------------+
-| test-net   | 10.0.3.1         | 10.0.3.0/24 |
-+------------+------------------+-------------+
+    -d, --dns <dns>                                      The DNS server to use
+    -i, --internal-address <internal-address>            Internal address for the new client
+    -p, --persistent-keepalive <persistent-keepalive>    Persistent keepalive for the client
+        --priv <private-key>
+            Use the given private key, do not use an auto-generated key-pair
+
+        --pub <public-key>                               Use the given public key, do not use an auto-generated key-pair
+
+ARGS:
+    <name>    Name of client to add
 ```
 
-If you just want a single entrypoint into the network, with no subnet, simply leave that option out. This is good for single clients.
+To add a client named `client-c` with address `10.0.1.4` that should route only the remote subnet through the VPN:
+
+    wireguard-configure <config> add-client --name client-c -a 10.0.1.0/24 -i 10.0.1.4
+
+### How to route all traffic through the VPN
+
+To route all the traffic generated by a client, just specify `allowed_ips` to be `0.0.0.0/0`.
+
+    wireguard-configure <config> add-client --name client-c -a 0.0.0.0/0 -i 10.0.1.4
+
+
+## Printing the configurations
+
+### Router configuration
+
+Invoking 
+      
+      wireguard-configure <config> router-config
+    
+prints out the router configuration.
 
 ```
-$ wireguard-configure test.conf add-client --name test-net2 -i 10.0.10.10
-Client added
-$ wireguard-configure test.conf --list
-+------------+------------------+---------------+
-| Name       | Internal Address | Allowed IPs   |
-+------------+------------------+---------------+
-| vpn-router | 10.0.0.1         | 10.0.0.0/24   |
-+------------+------------------+---------------+
-| client-a   | 10.0.1.1         | 10.0.1.0/24   |
-+------------+------------------+---------------+
-| client-b   | 10.0.2.1         | 10.0.2.0/24   |
-+------------+------------------+---------------+
-| test-net   | 10.0.3.1         | 10.0.3.0/24   |
-+------------+------------------+---------------+
-| test-net2  | 10.0.10.10       | 10.0.10.10/32 |
-+------------+------------------+---------------+
-```
-
-We can now dump ready-to-go configs.
-
-```
-$ wireguard-configure test.conf client-config test-net
-[Interface]
-# name: test-net
-PrivateKey = yDLYWiwOjO5OUv+TpGuLlAJWgI3u1+C3x4uG2YUcpH8=
-[Peer]
 # vpn-router
-PublicKey = 560oUL8qMUbEFcQRys3tm/IbO8DPz96Oy6xrVlPuIjk=
-Endpoint = vpn.com:47654
-AllowedIPs = 10.0.0.0/24
+[Interface]
+Address = 10.0.1.1/24
+PrivateKey = wPbMYTCgGzfkg3vlt3xoVLhbozRpvVmM8mkm6PFB1Us=
+ListenPort = 31337
+
+# client-a
+[Peer]
+PublicKey = a8LCjRe7oLdxLdHS1CmGqG9L813TAnMnnEzRTBXkHzM=
+PersistentKeepalive = 25
+AllowedIPs = 10.0.1.2/32
+
+# client-b
+[Peer]
+PublicKey = rCMWJp3RMXgx/cgWAohhSYJBG3+SQD2hhFcBd0eVwmg=
+PersistentKeepalive = 25
+AllowedIPs = 10.0.1.3/32
+```
+
+### Client configuration
+
+To print a specific client's configuration, invoke
+
+    wireguard-configure <config> client-config <client>
+
+```
+# client-a
+[Interface]
+PrivateKey = aJQEvc6VUDhGjFr5kHqJaSDMHcVaRFniKHxShx3JiV4=
+Address = 10.0.1.2
+DNS = 10.0.1.1
+
+# vpn-router
+[Peer]
+PublicKey = a8LCjRe7oLdxLdHS1CmGqG9L813TAnMnnEzRTBXkHzM=
+Endpoint = vpn.com:31337
+AllowedIPs = 0.0.0.0/0
 ```
