@@ -1,6 +1,7 @@
 use crate::endpoint::{EndPoint, Router};
 use ipnet::Ipv4Net;
 use serde_yaml;
+use std::error::Error;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -13,29 +14,23 @@ pub struct Configuration {
 }
 
 impl Configuration {
-    pub fn open(path: &Path) -> Configuration {
+    pub fn open(path: &Path) -> Result<Configuration, Box<dyn Error>> {
         let mut file = File::open(path).expect(&format!("Failed to open {:?}", path));
-
         let mut buffer: String = String::new();
-        file.read_to_string(&mut buffer)
-            .expect("Failed to read configuration file");
 
-        match serde_yaml::from_str(&buffer) {
-            Ok(configuration) => configuration,
-            Err(e) => {
-                eprintln!("Failed to parse configuration");
-                panic!("{}", e);
-            }
-        }
+        file.read_to_string(&mut buffer)?;
+
+        Ok(serde_yaml::from_str(&buffer)?)
     }
 
-    pub fn save(&self, path: &Path) {
-        let mut file = File::create(path).expect(&format!("Failed to open {:?}", path));
+    pub fn save(&self, path: &Path) -> Result<(), std::io::Error> {
+        let mut file = File::create(path)?;
 
         let bytes = serde_yaml::to_string(&self).expect("Failed to serialize configuration");
 
-        file.write_all(bytes.as_bytes())
-            .expect("Failed to write configuration file");
+        file.write_all(bytes.as_bytes())?;
+
+        Ok(())
     }
 
     pub fn new(router: Router) -> Configuration {

@@ -45,6 +45,10 @@ fn example_configuration() -> Configuration {
 fn main() {
     let args = Arguments::from_args();
 
+    // TODO: fixme
+    let mut configuration =
+        Configuration::open(&args.config).expect("Failed to open configuration.");
+
     match args.subcommand {
         SubCommand::AddClient {
             client_name,
@@ -55,7 +59,6 @@ fn main() {
             public_key,
             private_key: _,
         } => {
-            let mut configuration = Configuration::open(&args.config);
             if configuration
                 .clients()
                 .iter()
@@ -84,13 +87,14 @@ fn main() {
 
             configuration.push_client(endpoint);
 
-            configuration.save(&args.config);
+            // TODO: properly handle errors
+            configuration
+                .save(&args.config)
+                .expect("Failed to save configuration.");
 
             println!("Client added");
         }
         SubCommand::ClientConfig { client_name } => {
-            let configuration = Configuration::open(&args.config);
-
             configuration
                 .client_by_name(&client_name)
                 .expect(&format!("Could not find client {}", client_name));
@@ -98,12 +102,13 @@ fn main() {
             println!("{}", configuration.client_config(&client_name).unwrap());
         }
         SubCommand::GenerateExample => {
-            example_configuration().save(Path::new(&args.config));
+            // TODO: properly handle errors
+            example_configuration()
+                .save(Path::new(&args.config))
+                .expect("Failed to save configuration.");
             println!("Configuration saved to file.");
         }
         SubCommand::List => {
-            let configuration = Configuration::open(&args.config);
-
             let mut table = Table::new();
 
             table.add_row(Row::new(vec![
@@ -136,19 +141,18 @@ fn main() {
             table.printstd();
         }
         SubCommand::RemoveClient { client_name } => {
-            let mut configuration = Configuration::open(&args.config);
-
             if !configuration.remove_client_by_name(&client_name) {
                 eprintln!("Failed to find and remove client {}", client_name);
                 exit(1);
             }
 
-            configuration.save(&args.config);
+            // TODO: properly handle errors
+            configuration
+                .save(&args.config)
+                .expect("Failed to save configuration.");
             println!("Client {} removed", client_name);
         }
         SubCommand::RouterConfig => {
-            let configuration = Configuration::open(&args.config);
-
             println!("{}", configuration.router().interface());
 
             for client in configuration.clients() {
