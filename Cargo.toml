@@ -1,7 +1,10 @@
 [package]
 name = "wireguard-configure"
 version = "0.1.1"
-authors = [ "Alex Eubanks <endeavor@rainbowsandpwnies.com>", "Giulio De Pasquale <depasquale+github@giugl.io>" ]
+authors = [
+    "Alex Eubanks <endeavor@rainbowsandpwnies.com>",
+    "Giulio De Pasquale <depasquale+github@giugl.io>"
+]
 repository = "https://github.com/peperunas/wireguard-configure"
 description = "Command-line configuration manager for wireguard"
 license = "Apache-2.0"
@@ -11,11 +14,12 @@ edition = "2018"
 [dependencies]
 clap = "2.32"
 error-chain = "0.12"
-ipnet = {version="1.2.1", features=["with-serde"]}
+ipnet = { version = "1.2.1", features = ["with-serde"] }
 prettytable-rs = "0.7.0"
 serde = "1.0"
 serde_derive = "1.0"
 serde_yaml = "0.7"
+structopt = "0.3"
 
 [[bin]]
 name = "wireguard-configure"

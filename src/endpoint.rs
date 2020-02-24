@@ -253,18 +253,20 @@ impl EndPoint {
         lines.push(format!("# {}", self.name()));
         lines.push("[Peer]".to_string());
         lines.push(format!("PublicKey = {}", self.public_key()));
+
         if let Some(external_address) = self.external_address() {
             lines.push(format!("Endpoint = {}", external_address));
         }
 
         lines.push(format!(
             "AllowedIPs = {}",
-            self.allowed_ips()
+            self.allowed_ips
                 .iter()
                 .map(|ip| format!("{}", ip))
                 .collect::<Vec<String>>()
                 .join(", ")
         ));
+        
         lines.join("\n")
     }
 }

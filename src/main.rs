@@ -4,18 +4,18 @@
 extern crate serde_derive;
 
 mod addrport;
+mod args;
 mod configuration;
 mod endpoint;
 
 use crate::addrport::AddrPort;
 use crate::configuration::Configuration;
 use crate::endpoint::{EndPoint, Router};
-use clap::{App, Arg, SubCommand};
-use ipnet::Ipv4Net;
+use args::{Arguments, SubCommand};
 use prettytable::{cell::Cell, row::Row, Table};
-use std::net::Ipv4Addr;
 use std::path::Path;
 use std::process::exit;
+use structopt::StructOpt;
 
 fn example_configuration() -> Configuration {
     let router = Router::new(
@@ -43,209 +43,117 @@ fn example_configuration() -> Configuration {
 }
 
 fn main() {
-    let matches = App::new("wireguard-configure")
-        .version("0.0.1")
-        .author("Alex Eubanks <endeavor@rainbowsandpwnies.com>")
-        .about("Simple wireguard configuration")
-        .arg(
-            Arg::with_name("config")
-                .value_name("CONFIG")
-                .required(true)
-                .help("wireguard-configure configuration file"),
-        )
-        .arg(
-            Arg::with_name("example")
-                .long("example")
-                .help("Generate an example configuration file"),
-        )
-        .arg(
-            Arg::with_name("list")
-                .short("l")
-                .long("list")
-                .conflicts_with("example")
-                .help("List clients in this configuration"),
-        )
-        .subcommand(
-            SubCommand::with_name("add-client")
-                .about("Add a client to the configuration")
-                .arg(
-                    Arg::with_name("name")
-                        .short("n")
-                        .long("name")
-                        .value_name("NAME")
-                        .required(true)
-                        .help("Name for the new client"),
-                )
-                .arg(
-                    Arg::with_name("public-key")
-                        .short("k")
-                        .long("public-key")
-                        .value_name("PUBLIC_KEY")
-                        .help(
-                            "Use the given public key, and don't generate keys \
-                             automatically",
-                        ),
-                )
-                .arg(
-                    Arg::with_name("internal-address")
-                        .short("i")
-                        .long("internal-address")
-                        .value_name("INTERNAL_ADDRESS")
-                        .required(true)
-                        .help("Internal address for the new client"),
-                )
-                .arg(
-                    Arg::with_name("persistent-keepalive")
-                        .short("p")
-                        .long("persistent-keepalive")
-                        .value_name("PERSISTENT_KEEPALIVE")
-                        .help("Optional persistent keepalive for the client"),
-                )
-                .arg(
-                    Arg::with_name("allowed-ips")
-                        .short("a")
-                        .long("allowed-ips")
-                        .value_name("ALLOWED_IPS")
-                        .help("An comma-delimited list of subnets for this client"),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("remove-client")
-                .about("Remove a client from the configuration")
-                .arg(
-                    Arg::with_name("name")
-                        .value_name("NAME")
-                        .required(true)
-                        .help("Name of client to remove"),
-                ),
-        )
-        .subcommand(SubCommand::with_name("router-config").about("Dump router config"))
-        .subcommand(
-            SubCommand::with_name("client-config")
-                .about("Dump client config")
-                .arg(
-                    Arg::with_name("name")
-                        .value_name("NAME")
-                        .required(true)
-                        .help("Name of client to dump configuration for"),
-                ),
-        )
-        .get_matches();
+    let args = Arguments::from_args();
 
-    let filename = matches.value_of("config").unwrap();
+    match args.subcommand {
+        SubCommand::AddClient {
+            client_name,
+            internal_address,
+            allowed_ips,
+            dns: _,
+            persistent_keepalive,
+            public_key,
+            private_key: _,
+        } => {
+            let mut configuration = Configuration::open(&args.config);
+            if configuration
+                .clients()
+                .iter()
+                .any(|client| client.name() == client_name)
+            {
+                eprintln!("Client {} already exists", client_name);
+                exit(1);
+            }
 
-    if matches.is_present("example") {
-        let configuration = example_configuration();
+            let mut endpoint = EndPoint::new(client_name, internal_address);
 
-        configuration.save(Path::new(filename));
+            if let Some(public_key) = public_key {
+                endpoint.set_private_key(None);
+                endpoint.set_public_key(public_key.to_string());
+            }
 
-        println!("Configuration saved to file");
-    } else if matches.is_present("list") {
-        let configuration = Configuration::open(Path::new(filename));
+            if let Some(keepalive) = persistent_keepalive {
+                endpoint.set_persistent_keepalive(Some(keepalive));
+            }
 
-        let mut table = Table::new();
-
-        table.add_row(Row::new(vec![
-            Cell::new("Name"),
-            Cell::new("Internal Address"),
-            Cell::new("Allowed IPs"),
-        ]));
-
-        table.add_row(Row::new(vec![
-            Cell::new(configuration.router().name()),
-            Cell::new(&format!("{}", configuration.router().internal_address())),
-            Cell::new(""),
-        ]));
-
-        for client in configuration.clients() {
-            table.add_row(Row::new(vec![
-                Cell::new(client.name()),
-                Cell::new(&format!("{}", client.internal_address())),
-                Cell::new(
-                    &client
-                        .allowed_ips()
-                        .iter()
-                        .map(|ip| format!("{}", ip))
-                        .collect::<Vec<String>>()
-                        .join(","),
-                ),
-            ]));
-        }
-
-        table.printstd();
-    } else if let Some(matches) = matches.subcommand_matches("remove-client") {
-        let name = matches.value_of("name").unwrap();
-
-        let mut configuration = Configuration::open(Path::new(filename));
-        if !configuration.remove_client_by_name(name) {
-            eprintln!("Failed to find and remove client {}", name);
-            exit(1);
-        }
-
-        configuration.save(Path::new(filename));
-        println!("Client {} removed", name);
-    } else if let Some(matches) = matches.subcommand_matches("add-client") {
-        let name = matches.value_of("name").unwrap();
-
-        let mut configuration = Configuration::open(Path::new(filename));
-        if configuration
-            .clients()
-            .iter()
-            .any(|client| client.name() == name)
-        {
-            eprintln!("Client {} already exists", name);
-            exit(1);
-        }
-
-        let internal_address: Ipv4Addr = matches
-            .value_of("internal-address")
-            .unwrap()
-            .parse()
-            .expect("Invalid internal address");
-
-        let mut endpoint = EndPoint::new(name, internal_address);
-
-        if let Some(public_key) = matches.value_of("public-key") {
-            endpoint.set_private_key(None);
-            endpoint.set_public_key(public_key.to_string());
-        }
-
-        if let Some(keepalive) = matches.value_of("persistent-keepalive") {
-            let keepalive: usize = keepalive.parse().expect("Invalid persistent keepalive");
-            endpoint.set_persistent_keepalive(Some(keepalive));
-        }
-
-        if let Some(allowed_ips) = matches.value_of("allowed-ips") {
-            for allowed_ip in allowed_ips.split(",") {
-                let allowed_ip: Ipv4Net = allowed_ip.parse().expect("Invalid allowed ip");
+            for allowed_ip in allowed_ips {
                 endpoint.push_allowed_ip(allowed_ip);
             }
+
+            // TODO: Add DNS and private key handling
+
+            configuration.push_client(endpoint);
+
+            configuration.save(&args.config);
+
+            println!("Client added");
         }
+        SubCommand::ClientConfig { client_name } => {
+            let configuration = Configuration::open(&args.config);
 
-        configuration.push_client(endpoint);
+            configuration
+                .client_by_name(&client_name)
+                .expect(&format!("Could not find client {}", client_name));
 
-        configuration.save(Path::new(filename));
-
-        println!("Client added");
-    } else if let Some(_) = matches.subcommand_matches("router-config") {
-        let configuration = Configuration::open(Path::new(filename));
-
-        println!("{}", configuration.router().interface());
-
-        for client in configuration.clients() {
-            println!("{}", client.peer());
+            println!("{}", configuration.client_config(&client_name).unwrap());
         }
-    } else if let Some(matches) = matches.subcommand_matches("client-config") {
-        let configuration = Configuration::open(Path::new(filename));
-        let name = matches.value_of("name").unwrap();
+        SubCommand::GenerateExample => {
+            example_configuration().save(Path::new(&args.config));
+            println!("Configuration saved to file.");
+        }
+        SubCommand::List => {
+            let configuration = Configuration::open(&args.config);
 
-        configuration
-            .client_by_name(name)
-            .expect(&format!("Could not find client {}", name));
+            let mut table = Table::new();
 
-        println!("{}", configuration.client_config(name).unwrap());
-    } else {
-        eprintln!("No command!");
-        exit(1)
+            table.add_row(Row::new(vec![
+                Cell::new("Name"),
+                Cell::new("Internal Address"),
+                Cell::new("Allowed IPs"),
+            ]));
+
+            table.add_row(Row::new(vec![
+                Cell::new(configuration.router().name()),
+                Cell::new(&format!("{}", configuration.router().internal_address())),
+                Cell::new(""),
+            ]));
+
+            for client in configuration.clients() {
+                table.add_row(Row::new(vec![
+                    Cell::new(client.name()),
+                    Cell::new(&format!("{}", client.internal_address())),
+                    Cell::new(
+                        &client
+                            .allowed_ips()
+                            .iter()
+                            .map(|ip| format!("{}", ip))
+                            .collect::<Vec<String>>()
+                            .join(","),
+                    ),
+                ]));
+            }
+
+            table.printstd();
+        }
+        SubCommand::RemoveClient { client_name } => {
+            let mut configuration = Configuration::open(&args.config);
+
+            if !configuration.remove_client_by_name(&client_name) {
+                eprintln!("Failed to find and remove client {}", client_name);
+                exit(1);
+            }
+
+            configuration.save(&args.config);
+            println!("Client {} removed", client_name);
+        }
+        SubCommand::RouterConfig => {
+            let configuration = Configuration::open(&args.config);
+
+            println!("{}", configuration.router().interface());
+
+            for client in configuration.clients() {
+                println!("{}", client.peer());
+            }
+        }
     }
 }
