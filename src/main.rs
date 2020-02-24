@@ -45,10 +45,6 @@ fn example_configuration() -> Configuration {
 fn main() {
     let args = Arguments::from_args();
 
-    // TODO: fixme
-    let mut configuration =
-        Configuration::open(&args.config).expect("Failed to open configuration.");
-
     match args.subcommand {
         SubCommand::AddClient {
             client_name,
@@ -59,6 +55,10 @@ fn main() {
             public_key,
             private_key: _,
         } => {
+            // TODO: fixme
+            let mut configuration =
+                Configuration::open(&args.config).expect("Failed to open configuration.");
+
             if configuration
                 .clients
                 .iter()
@@ -95,6 +95,10 @@ fn main() {
             println!("Client added");
         }
         SubCommand::ClientConfig { client_name } => {
+            // TODO: fixme
+            let configuration =
+                Configuration::open(&args.config).expect("Failed to open configuration.");
+
             configuration
                 .client_by_name(&client_name)
                 .expect(&format!("Could not find client {}", client_name));
@@ -114,6 +118,10 @@ fn main() {
             println!("Configuration saved to file.");
         }
         SubCommand::List => {
+            // TODO: fixme
+            let configuration =
+                Configuration::open(&args.config).expect("Failed to open configuration.");
+
             let mut table = Table::new();
 
             table.add_row(Row::new(vec![
@@ -146,6 +154,10 @@ fn main() {
             table.printstd();
         }
         SubCommand::RemoveClient { client_name } => {
+            // TODO: fixme
+            let mut configuration =
+                Configuration::open(&args.config).expect("Failed to open configuration.");
+
             if !configuration.remove_client_by_name(&client_name) {
                 eprintln!("Failed to find and remove client {}", client_name);
                 exit(1);
@@ -158,6 +170,10 @@ fn main() {
             println!("Client {} removed", client_name);
         }
         SubCommand::RouterConfig => {
+            // TODO: fixme
+            let configuration =
+                Configuration::open(&args.config).expect("Failed to open configuration.");
+
             println!("{}", configuration.router.interface());
 
             for client in configuration.clients {
