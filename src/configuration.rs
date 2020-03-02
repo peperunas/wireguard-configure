@@ -34,7 +34,7 @@ impl Configuration {
 
     pub fn new(router: Router) -> Configuration {
         Configuration {
-            router: router,
+            router,
             clients: Vec::new(),
         }
     }

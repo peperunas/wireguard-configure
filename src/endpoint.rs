@@ -56,10 +56,10 @@ impl Router {
 
         Router {
             name: name.into(),
-            private_key: private_key,
-            public_key: public_key,
-            external_address: external_address,
-            internal_address: internal_address,
+            private_key,
+            public_key,
+            external_address,
+            internal_address,
         }
     }
 

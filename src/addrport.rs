@@ -10,7 +10,7 @@ impl AddrPort {
     pub fn new<A: Into<String>>(address: A, port: u16) -> AddrPort {
         AddrPort {
             address: address.into(),
-            port: port,
+            port,
         }
     }
 }
