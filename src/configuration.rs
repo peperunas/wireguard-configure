@@ -1,4 +1,4 @@
-use crate::endpoint::{Client, Router};
+use crate::endpoint::{Peer, Router};
 use ipnet::Ipv4Net;
 use serde_yaml;
 use std::error::Error;
@@ -9,7 +9,7 @@ use std::path::Path;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {
     pub router: Router,
-    pub clients: Vec<Client>,
+    pub clients: Vec<Peer>,
 }
 
 impl Configuration {
@@ -39,7 +39,7 @@ impl Configuration {
         }
     }
 
-    pub fn push_client(&mut self, client: Client) {
+    pub fn push_client(&mut self, client: Peer) {
         self.clients.push(client);
     }
 
@@ -53,7 +53,7 @@ impl Configuration {
         false
     }
 
-    pub fn client_by_name(&self, name: &str) -> Option<&Client> {
+    pub fn client_by_name(&self, name: &str) -> Option<&Peer> {
         self.clients.iter().find(|client| client.name == name)
     }
 

@@ -10,7 +10,7 @@ mod endpoint;
 
 use crate::addrport::AddrPort;
 use crate::configuration::Configuration;
-use crate::endpoint::{Client, Router};
+use crate::endpoint::{Peer, Router};
 use args::{Arguments, SubCommand};
 use ipnet::Ipv4Net;
 use prettytable::{cell::Cell, row::Row, Table};
@@ -35,14 +35,14 @@ fn example_configuration() -> Configuration {
     let mut configuration = Configuration::new(router);
 
     configuration.push_client(
-        Client::new("client-a", client_a_ip)
+        Peer::new("client-a", client_a_ip)
             .builder_push_allowed_ips(client_a_allowed_ips)
             .builder_persistent_keepalive(Some(25))
             .builder_dns(Some(client_a_dns)),
     );
 
     configuration.push_client(
-        Client::new("client-b", client_b_ip)
+        Peer::new("client-b", client_b_ip)
             .builder_push_allowed_ips(router_subnet)
             .builder_persistent_keepalive(Some(25)),
     );
@@ -75,7 +75,7 @@ fn main() {
                 exit(1);
             }
 
-            let mut endpoint = Client::new(client_name, internal_address).builder_dns(dns);
+            let mut endpoint = Peer::new(client_name, internal_address).builder_dns(dns);
 
             if let Some(public_key) = public_key {
                 endpoint.set_private_key(None);

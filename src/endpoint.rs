@@ -81,7 +81,7 @@ impl Router {
         lines.join("\n")
     }
 
-    pub fn peer(&self, client: &Client) -> String {
+    pub fn peer(&self, client: &Peer) -> String {
         let mut lines: Vec<String> = Vec::new();
 
         lines.push(format!("# {}", client.name));
@@ -98,7 +98,7 @@ impl Router {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Client {
+pub struct Peer {
     pub name: String,
     pub private_key: Option<String>,
     pub public_key: String,
@@ -108,11 +108,11 @@ pub struct Client {
     pub persistent_keepalive: Option<usize>,
 }
 
-impl Client {
-    pub fn new<S: Into<String>>(name: S, internal_address: Ipv4Addr) -> Client {
+impl Peer {
+    pub fn new<S: Into<String>>(name: S, internal_address: Ipv4Addr) -> Peer {
         let (private_key, public_key) = gen_keys().expect("Error while generating key pair.");
 
-        Client {
+        Peer {
             name: name.into(),
             private_key: Some(private_key),
             public_key,
@@ -123,17 +123,17 @@ impl Client {
         }
     }
 
-    pub fn builder_push_allowed_ips(mut self, allowed_ip: Ipv4Net) -> Client {
+    pub fn builder_push_allowed_ips(mut self, allowed_ip: Ipv4Net) -> Peer {
         self.allowed_ips.push(allowed_ip);
         self
     }
 
-    pub fn builder_persistent_keepalive(mut self, keepalive: Option<usize>) -> Client {
+    pub fn builder_persistent_keepalive(mut self, keepalive: Option<usize>) -> Peer {
         self.persistent_keepalive = keepalive;
         self
     }
 
-    pub fn builder_dns(mut self, dns: Option<Ipv4Addr>) -> Client {
+    pub fn builder_dns(mut self, dns: Option<Ipv4Addr>) -> Peer {
         self.dns = dns;
         self
     }
