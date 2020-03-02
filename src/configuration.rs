@@ -67,8 +67,8 @@ impl Configuration {
     pub fn client_config(&self, name: &str, router: &Router) -> Option<String> {
         let client = self.client_by_name(name)?;
 
-        match client.interface() {
-            Some(interface) => Some(format!("{}\n\n{}", interface, client.peer(&router))),
+        match client.interface_str() {
+            Some(interface) => Some(format!("{}\n\n{}", interface, client.peer_str(&router))),
             None => None,
         }
     }

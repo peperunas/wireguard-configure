@@ -51,6 +51,7 @@ impl Router {
         internal_address: Ipv4Net,
         external_address: AddrPort,
     ) -> Router {
+        // generating keypair by calling wg on the host system
         let (private_key, public_key) = gen_keys().expect("Error while generating key pair.");
 
         Router {
@@ -75,7 +76,10 @@ impl Router {
 
         lines.push(format!("# {}", self.name));
         lines.push("[Interface]".to_string());
-        lines.push(format!("Address = {}", Ipv4Net::from(self.internal_address)));
+        lines.push(format!(
+            "Address = {}",
+            Ipv4Net::from(self.internal_address)
+        ));
         lines.push(format!("PrivateKey = {}", self.private_key));
         lines.push(format!("ListenPort = {}", self.external_address.port));
         lines.join("\n")
@@ -92,7 +96,10 @@ impl Router {
             lines.push(format!("PersistentKeepalive = {}", keepalive));
         }
 
-        lines.push(format!("AllowedIPs = {}", Ipv4Net::from(client.internal_address)));
+        lines.push(format!(
+            "AllowedIPs = {}",
+            Ipv4Net::from(client.internal_address)
+        ));
         lines.join("\n")
     }
 }
@@ -110,6 +117,7 @@ pub struct Peer {
 
 impl Peer {
     pub fn new<S: Into<String>>(name: S, internal_address: Ipv4Addr) -> Peer {
+        // generating keypair by calling wg on the host system
         let (private_key, public_key) = gen_keys().expect("Error while generating key pair.");
 
         Peer {
@@ -123,27 +131,40 @@ impl Peer {
         }
     }
 
-    pub fn builder_push_allowed_ips(mut self, allowed_ip: Ipv4Net) -> Peer {
-        self.allowed_ips.push(allowed_ip);
-        self
-    }
-
-    pub fn builder_persistent_keepalive(mut self, keepalive: Option<usize>) -> Peer {
-        self.persistent_keepalive = keepalive;
-        self
-    }
+    //
+    // Builder functions
+    //
 
     pub fn builder_dns(mut self, dns: Option<Ipv4Addr>) -> Peer {
         self.dns = dns;
         self
     }
 
-    pub fn set_internal_address(&mut self, internal_address: Ipv4Addr) {
-        self.internal_address = internal_address;
+    pub fn builder_keepalive(mut self, keepalive: Option<usize>) -> Peer {
+        self.persistent_keepalive = keepalive;
+        self
     }
+
+    pub fn builder_vec_allowed_ips(mut self, allowed_ips: Vec<Ipv4Net>) -> Peer {
+        self.allowed_ips = allowed_ips;
+        self
+    }
+
+    pub fn builder_allowed_ips(mut self, allowed_ip: Ipv4Net) -> Peer {
+        self.allowed_ips.push(allowed_ip);
+        self
+    }
+
+    //
+    // Setters
+    //
 
     pub fn push_allowed_ip(&mut self, allowed_ip: Ipv4Net) {
         self.allowed_ips.push(allowed_ip);
+    }
+
+    pub fn set_internal_address(&mut self, internal_address: Ipv4Addr) {
+        self.internal_address = internal_address;
     }
 
     pub fn set_persistent_keepalive(&mut self, keepalive: Option<usize>) {
@@ -158,36 +179,58 @@ impl Peer {
         self.public_key = public_key;
     }
 
-    pub fn interface(&self) -> Option<String> {
+    //
+    // Other functions
+    //
+
+    pub fn interface_str(&self) -> Option<String> {
         let mut lines: Vec<String> = Vec::new();
 
         match &self.private_key {
             Some(private_key) => {
+                // Peer name
                 lines.push(format!("# {}", self.name));
+
+                // Interface section begins
                 lines.push("[Interface]".to_string());
+
+                // Private key
                 lines.push(format!("PrivateKey = {}", private_key));
+
+                // Internal address
                 lines.push(format!("Address = {}", self.internal_address));
 
+                // DNS, if any
                 if let Some(dns) = self.dns {
                     lines.push(format!("DNS = {}", dns));
                 }
 
                 Some(lines.join("\n"))
             }
+            // if no private key is present, we cannot produce a valid Interface section
             None => None,
         }
     }
 
-    pub fn peer(&self, router: &Router) -> String {
+    pub fn peer_str(&self, router: &Router) -> String {
         let mut lines: Vec<String> = Vec::new();
 
+        // Router name
         lines.push(format!("# {}", router.name));
+
+        // Peer section begins
         lines.push("[Peer]".to_string());
+
+        // Public key
         lines.push(format!("PublicKey = {}", self.public_key));
+
+        // Router endpoint
         lines.push(format!(
             "Endpoint = {}:{}",
             router.external_address.address, router.external_address.port
         ));
+
+        // Allowed IPs
         lines.push(format!(
             "AllowedIPs = {}",
             self.allowed_ips
