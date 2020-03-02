@@ -34,14 +34,14 @@ fn example_configuration() -> Configuration {
     let router = Router::new("vpn-router", router_ip, AddrPort::new("vpn.com", 31337));
     let mut configuration = Configuration::new(router);
 
-    configuration.push_client(
+    configuration.push_peer(
         Peer::new("client-a", client_a_ip)
             .builder_push_allowed_ips(client_a_allowed_ips)
             .builder_persistent_keepalive(Some(25))
             .builder_dns(Some(client_a_dns)),
     );
 
-    configuration.push_client(
+    configuration.push_peer(
         Peer::new("client-b", client_b_ip)
             .builder_push_allowed_ips(router_subnet)
             .builder_persistent_keepalive(Some(25)),
@@ -62,10 +62,10 @@ fn main() {
             persistent_keepalive,
             public_key,
         } => {
-            // TODO: fixme
             let mut configuration =
                 Configuration::open(&args.config).expect("Failed to open configuration.");
 
+            // check if the client we are trying to add already exists
             if configuration
                 .clients
                 .iter()
@@ -75,24 +75,25 @@ fn main() {
                 exit(1);
             }
 
-            let mut endpoint = Peer::new(client_name, internal_address).builder_dns(dns);
+            // creating peer
+            let mut peer = Peer::new(client_name, internal_address).builder_dns(dns);
 
             if let Some(public_key) = public_key {
-                endpoint.set_private_key(None);
-                endpoint.set_public_key(public_key.to_string());
+                peer.set_private_key(None);
+                peer.set_public_key(public_key.to_string());
             }
 
             if let Some(keepalive) = persistent_keepalive {
-                endpoint.set_persistent_keepalive(Some(keepalive));
+                peer.set_persistent_keepalive(Some(keepalive));
             }
 
             for allowed_ip in allowed_ips {
-                endpoint.push_allowed_ip(allowed_ip);
+                peer.push_allowed_ip(allowed_ip);
             }
 
-            configuration.push_client(endpoint);
+            // updating configuration
+            configuration.push_peer(peer);
 
-            // TODO: properly handle errors
             configuration
                 .save(&args.config)
                 .expect("Failed to save configuration.");
