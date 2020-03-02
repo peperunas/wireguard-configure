@@ -39,7 +39,7 @@ impl Configuration {
         }
     }
 
-    pub fn push_client(&mut self, client: Peer) {
+    pub fn push_peer(&mut self, client: Peer) {
         self.clients.push(client);
     }
 
