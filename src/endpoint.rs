@@ -76,10 +76,7 @@ impl Router {
 
         lines.push(format!("# {}", self.name));
         lines.push("[Interface]".to_string());
-        lines.push(format!(
-            "Address = {}",
-            Ipv4Net::from(self.internal_address)
-        ));
+        lines.push(format!("Address = {}", self.internal_address));
         lines.push(format!("PrivateKey = {}", self.private_key));
         lines.push(format!("ListenPort = {}", self.external_address.port));
         lines.join("\n")

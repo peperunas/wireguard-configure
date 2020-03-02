@@ -83,7 +83,7 @@ fn main() {
 
             if let Some(public_key) = public_key {
                 peer.set_private_key(None);
-                peer.set_public_key(public_key.to_string());
+                peer.set_public_key(public_key);
             }
 
             // updating configuration
