@@ -74,29 +74,46 @@ impl Router {
     pub fn interface_str(&self) -> String {
         let mut lines: Vec<String> = Vec::new();
 
+        // Router name
         lines.push(format!("# {}", self.name));
+
+        // Interface section begins
         lines.push("[Interface]".to_string());
+
+        // Internal address
         lines.push(format!("Address = {}", self.internal_address));
+
+        // Private key
         lines.push(format!("PrivateKey = {}", self.private_key));
+
+        // Listen port
         lines.push(format!("ListenPort = {}", self.external_address.port));
         lines.join("\n")
     }
 
-    pub fn peer_str(&self, client: &Peer) -> String {
+    pub fn peer_str(&self, peer: &Peer) -> String {
         let mut lines: Vec<String> = Vec::new();
 
-        lines.push(format!("# {}", client.name));
-        lines.push("[Peer]".to_string());
-        lines.push(format!("PublicKey = {}", client.public_key));
+        // Peer name
+        lines.push(format!("# {}", peer.name));
 
-        if let Some(keepalive) = client.persistent_keepalive {
+        // Peer section begins
+        lines.push("[Peer]".to_string());
+
+        // Public key
+        lines.push(format!("PublicKey = {}", peer.public_key));
+
+        // Keepalive, if any
+        if let Some(keepalive) = peer.persistent_keepalive {
             lines.push(format!("PersistentKeepalive = {}", keepalive));
         }
 
+        // Allowed IPs
         lines.push(format!(
             "AllowedIPs = {}",
-            Ipv4Net::from(client.internal_address)
+            Ipv4Net::from(peer.internal_address)
         ));
+
         lines.join("\n")
     }
 }
