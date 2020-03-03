@@ -132,23 +132,23 @@ impl Peer {
     // Builder functions
     //
 
-    pub fn builder_dns(mut self, dns: Option<Ipv4Addr>) -> Peer {
+    pub fn with_dns(mut self, dns: Option<Ipv4Addr>) -> Peer {
         self.dns = dns;
         self
     }
 
-    pub fn builder_keepalive(mut self, keepalive: Option<usize>) -> Peer {
+    pub fn with_keepalive(mut self, keepalive: Option<usize>) -> Peer {
         self.persistent_keepalive = keepalive;
         self
     }
 
-    pub fn builder_vec_allowed_ips(mut self, allowed_ips: Vec<Ipv4Net>) -> Peer {
+    pub fn with_vec_allowed_ips(mut self, allowed_ips: Vec<Ipv4Net>) -> Peer {
         self.allowed_ips = allowed_ips;
         self
     }
 
-    pub fn builder_allowed_ips(mut self, allowed_ip: Ipv4Net) -> Peer {
-        self.allowed_ips.push(allowed_ip);
+    pub fn with_allowed_ips(mut self, allowed_ips: Ipv4Net) -> Peer {
+        self.allowed_ips.push(allowed_ips);
         self
     }
 
@@ -156,8 +156,8 @@ impl Peer {
     // Setters
     //
 
-    pub fn push_allowed_ip(&mut self, allowed_ip: Ipv4Net) {
-        self.allowed_ips.push(allowed_ip);
+    pub fn push_allowed_ip(&mut self, allowed_ips: Ipv4Net) {
+        self.allowed_ips.push(allowed_ips);
     }
 
     pub fn set_internal_address(&mut self, internal_address: Ipv4Addr) {

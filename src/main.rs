@@ -36,15 +36,15 @@ fn example_configuration() -> Configuration {
 
     configuration.push_peer(
         Peer::new("client-a", client_a_ip)
-            .builder_allowed_ips(client_a_allowed_ips)
-            .builder_keepalive(Some(25))
-            .builder_dns(Some(client_a_dns)),
+            .with_allowed_ips(client_a_allowed_ips)
+            .with_keepalive(Some(25))
+            .with_dns(Some(client_a_dns)),
     );
 
     configuration.push_peer(
         Peer::new("client-b", client_b_ip)
-            .builder_allowed_ips(router_subnet)
-            .builder_keepalive(Some(25)),
+            .with_allowed_ips(router_subnet)
+            .with_keepalive(Some(25)),
     );
 
     configuration
@@ -77,9 +77,9 @@ fn main() {
 
             // creating peer
             let mut peer = Peer::new(client_name, internal_address)
-                .builder_dns(dns)
-                .builder_keepalive(persistent_keepalive)
-                .builder_vec_allowed_ips(allowed_ips);
+                .with_dns(dns)
+                .with_keepalive(persistent_keepalive)
+                .with_vec_allowed_ips(allowed_ips);
 
             if let Some(public_key) = public_key {
                 peer.set_private_key(None);
