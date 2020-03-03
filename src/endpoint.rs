@@ -71,7 +71,7 @@ impl Router {
         self.internal_address = internal_address;
     }
 
-    pub fn interface(&self) -> String {
+    pub fn interface_str(&self) -> String {
         let mut lines: Vec<String> = Vec::new();
 
         lines.push(format!("# {}", self.name));
@@ -82,7 +82,7 @@ impl Router {
         lines.join("\n")
     }
 
-    pub fn peer(&self, client: &Peer) -> String {
+    pub fn peer_str(&self, client: &Peer) -> String {
         let mut lines: Vec<String> = Vec::new();
 
         lines.push(format!("# {}", client.name));
