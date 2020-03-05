@@ -236,7 +236,7 @@ impl Peer {
         lines.push("[Peer]".to_string());
 
         // Public key
-        lines.push(format!("PublicKey = {}", self.public_key));
+        lines.push(format!("PublicKey = {}", router.public_key));
 
         // Router endpoint
         lines.push(format!(
