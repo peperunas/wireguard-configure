@@ -11,14 +11,11 @@ wireguard-configure 0.2.1
 Alex Eubanks <endeavor@rainbowsandpwnies.com>, Giulio De Pasquale <depasquale+github@giugl.io>
 
 USAGE:
-    wireguard-configure <config> <SUBCOMMAND>
+    wireguard-configure <SUBCOMMAND>
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
-
-ARGS:
-    <config>    wireguard-configure configuration file
 
 SUBCOMMANDS:
     add-client          Add a client to the configuration
