@@ -25,7 +25,7 @@ impl fmt::Display for Configuration {
 
 impl Configuration {
     pub fn open(path: &Path) -> Result<Configuration, Box<dyn Error>> {
-        let mut file = File::open(path).expect(&format!("Failed to open {:?}", path));
+        let mut file = File::open(path)?;
         let mut buffer: String = String::new();
 
         file.read_to_string(&mut buffer)?;
