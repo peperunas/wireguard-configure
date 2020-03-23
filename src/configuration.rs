@@ -44,13 +44,11 @@ impl Configuration {
     }
 
     pub fn remove_client_by_name(&mut self, name: &str) -> bool {
-        for i in 0..self.clients.len() {
-            if self.clients[i].name == name {
-                self.clients.remove(i);
-                return true;
-            }
-        }
-        false
+        let old_size = self.clients.len();
+
+        self.clients.retain(|x| x.name != name);
+        
+        old_size != self.clients.len()
     }
 
     pub fn client_by_name(&self, name: &str) -> Option<&Peer> {
