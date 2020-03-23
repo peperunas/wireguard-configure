@@ -13,7 +13,7 @@ use crate::configuration::Configuration;
 use crate::endpoint::{Peer, Router};
 use args::{Arguments, SubCommand};
 use ipnet::Ipv4Net;
-use prettytable::{cell::Cell, row::Row, Table};
+use prettytable::{Cell, Row, Table};
 use std::net::Ipv4Addr;
 use std::path::Path;
 use std::process::exit;
