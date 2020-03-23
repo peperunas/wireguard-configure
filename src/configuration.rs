@@ -54,13 +54,6 @@ impl Configuration {
         self.clients.push(client);
     }
 
-    pub fn remove_client_by_name(&mut self, name: &str) -> bool {
-        let old_size = self.clients.len();
-
-        self.clients.retain(|x| x.name != name);
-        old_size != self.clients.len()
-    }
-
     pub fn client_by_name(&self, name: &str) -> Option<&Peer> {
         self.clients.iter().find(|client| client.name == name)
     }

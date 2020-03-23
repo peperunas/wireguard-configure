@@ -185,9 +185,13 @@ fn handle_list(config: &Configuration) {
 }
 
 fn handle_remove_client(config: &mut Configuration, client_name: &str, config_path: &Path) {
-    if !config.remove_client_by_name(&client_name) {
-        eprintln!("Failed to find and remove client {}", client_name);
-        exit(1);
+    let old_clients_len = config.clients.len();
+
+    config.clients.retain(|x| x.name != client_name);
+
+    if config.clients.len() == old_clients_len {
+        println!("Could not find and remove client \"{}\"", client_name);
+        return;
     }
 
     // TODO: properly handle errors
