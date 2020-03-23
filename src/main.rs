@@ -55,6 +55,7 @@ fn main() {
 
     match args.subcommand {
         SubCommand::AddClient {
+            configuration_path,
             client_name,
             internal_address,
             allowed_ips,
@@ -62,12 +63,12 @@ fn main() {
             persistent_keepalive,
             public_key,
         } => {
-            let mut configuration =
-                Configuration::open(&args.config).expect("Failed to open configuration.");
+            let mut config =
+                Configuration::open(&configuration_path).expect("Failed to open configuration.");
 
             handle_add_client(
-                &mut configuration,
-                &args.config,
+                &mut config,
+                &configuration_path,
                 &client_name,
                 internal_address,
                 allowed_ips,
@@ -76,31 +77,36 @@ fn main() {
                 public_key,
             );
         }
-        SubCommand::ClientConfig { client_name } => {
-            let config = Configuration::open(&args.config).expect("Failed to open configuration.");
+        SubCommand::ClientConfig {
+            configuration_path,
+            client_name,
+        } => {
+            let config =
+                Configuration::open(&configuration_path).expect("Failed to open configuration.");
 
             handle_client_config(&config, &client_name);
         }
         SubCommand::GenerateExample => {
-            // TODO: properly handle errors
-            example_configuration()
-                .save(Path::new(&args.config))
-                .expect("Failed to save configuration.");
-            println!("Configuration saved to file.");
+            println!("{}", example_configuration());
         }
-        SubCommand::List => {
-            let config = Configuration::open(&args.config).expect("Failed to open configuration.");
+        SubCommand::List { configuration_path } => {
+            let config =
+                Configuration::open(&configuration_path).expect("Failed to open configuration.");
 
             handle_print(&config);
         }
-        SubCommand::RemoveClient { client_name } => {
+        SubCommand::RemoveClient {
+            configuration_path,
+            client_name,
+        } => {
             let mut config =
-                Configuration::open(&args.config).expect("Failed to open configuration.");
+                Configuration::open(&configuration_path).expect("Failed to open configuration.");
 
-            handle_remove_client(&mut config, &client_name, &args.config);
+            handle_remove_client(&mut config, &client_name, &configuration_path);
         }
-        SubCommand::RouterConfig => {
-            let config = Configuration::open(&args.config).expect("Failed to open configuration.");
+        SubCommand::RouterConfig { configuration_path } => {
+            let config =
+                Configuration::open(&configuration_path).expect("Failed to open configuration.");
 
             handle_router_config(&config);
         }
