@@ -2,6 +2,7 @@ use crate::endpoint::{Peer, Router};
 use ipnet::Ipv4Net;
 use serde_yaml;
 use std::error::Error;
+use std::fmt;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -10,6 +11,16 @@ use std::path::Path;
 pub struct Configuration {
     pub router: Router,
     pub clients: Vec<Peer>,
+}
+
+impl fmt::Display for Configuration {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            serde_yaml::to_string(&self).expect("Failed to serialize configuration.")
+        )
+    }
 }
 
 impl Configuration {
@@ -47,7 +58,6 @@ impl Configuration {
         let old_size = self.clients.len();
 
         self.clients.retain(|x| x.name != name);
-        
         old_size != self.clients.len()
     }
 
