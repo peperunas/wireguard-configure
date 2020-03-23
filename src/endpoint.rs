@@ -103,11 +103,6 @@ impl Router {
         // Public key
         lines.push(format!("PublicKey = {}", peer.public_key));
 
-        // Keepalive, if any
-        if let Some(keepalive) = peer.persistent_keepalive {
-            lines.push(format!("PersistentKeepalive = {}", keepalive));
-        }
-
         // Allowed IPs
         lines.push(format!(
             "AllowedIPs = {}",
@@ -244,6 +239,11 @@ impl Peer {
             router.external_address.address, router.external_address.port
         ));
 
+        // Keepalive, if any
+        if let Some(keepalive) = self.persistent_keepalive {
+            lines.push(format!("PersistentKeepalive = {}", keepalive));
+        }
+        
         // Allowed IPs
         lines.push(format!(
             "AllowedIPs = {}",
