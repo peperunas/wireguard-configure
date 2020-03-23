@@ -65,19 +65,11 @@ impl Configuration {
         self.clients.iter().find(|client| client.name == name)
     }
 
-    pub fn all_allowed_ips(&self) -> Vec<Ipv4Net> {
-        self.clients
-            .iter()
-            .flat_map(|client| client.allowed_ips.clone())
-            .collect()
-    }
-
-    pub fn client_config(&self, name: &str, router: &Router) -> Option<String> {
+    pub fn client_config(&self, name: &str) -> Option<String> {
         let client = self.client_by_name(name)?;
 
-        match client.interface_str() {
-            Some(interface) => Some(format!("{}\n\n{}", interface, client.peer_str(&router))),
-            None => None,
-        }
+        client
+            .interface_str()
+            .map(|interface| format!("{}\n\n{}", interface, client.peer_str(&self.router)))
     }
 }

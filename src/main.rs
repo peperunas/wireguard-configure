@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 #[macro_use]
 extern crate serde_derive;
 
@@ -147,12 +145,8 @@ fn handle_add_client(
 }
 
 fn handle_client_config(config: &Configuration, client_name: &str) {
-    match config.client_by_name(client_name) {
-        // TODO: change API
-        Some(client) => println!(
-            "{}",
-            config.client_config(&client.name, &config.router).unwrap()
-        ),
+    match config.client_config(client_name) {
+        Some(config) => println!("{}", config),
         None => println!("Could not find client {}", client_name),
     }
 }
