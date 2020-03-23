@@ -65,51 +65,21 @@ fn main() {
             let mut configuration =
                 Configuration::open(&args.config).expect("Failed to open configuration.");
 
-            // check if the client we are trying to add already exists
-            if configuration
-                .clients
-                .iter()
-                .any(|client| client.name == client_name)
-            {
-                eprintln!("Client {} already exists", client_name);
-                exit(1);
-            }
-
-            // creating peer
-            let mut peer = Peer::new(client_name, internal_address)
-                .with_dns(dns)
-                .with_keepalive(persistent_keepalive)
-                .with_vec_allowed_ips(allowed_ips);
-
-            if let Some(public_key) = public_key {
-                peer.set_private_key(None);
-                peer.set_public_key(public_key);
-            }
-
-            // updating configuration
-            configuration.push_peer(peer);
-
-            configuration
-                .save(&args.config)
-                .expect("Failed to save configuration.");
-
-            println!("Client added");
+            handle_add_client(
+                &mut configuration,
+                &args.config,
+                &client_name,
+                internal_address,
+                allowed_ips,
+                dns,
+                persistent_keepalive,
+                public_key,
+            );
         }
         SubCommand::ClientConfig { client_name } => {
-            // TODO: fixme
-            let configuration =
-                Configuration::open(&args.config).expect("Failed to open configuration.");
+            let config = Configuration::open(&args.config).expect("Failed to open configuration.");
 
-            configuration
-                .client_by_name(&client_name)
-                .expect(&format!("Could not find client {}", client_name));
-
-            println!(
-                "{}",
-                configuration
-                    .client_config(&client_name, &configuration.router)
-                    .unwrap()
-            );
+            handle_client_config(&config, &client_name);
         }
         SubCommand::GenerateExample => {
             // TODO: properly handle errors
@@ -119,67 +89,127 @@ fn main() {
             println!("Configuration saved to file.");
         }
         SubCommand::List => {
-            // TODO: fixme
-            let configuration =
-                Configuration::open(&args.config).expect("Failed to open configuration.");
+            let config = Configuration::open(&args.config).expect("Failed to open configuration.");
 
-            let mut table = Table::new();
-
-            table.add_row(Row::new(vec![
-                Cell::new("Name"),
-                Cell::new("Internal Address"),
-                Cell::new("Allowed IPs"),
-            ]));
-
-            table.add_row(Row::new(vec![
-                Cell::new(&configuration.router.name),
-                Cell::new(&format!("{}", configuration.router.internal_address)),
-                Cell::new(""),
-            ]));
-
-            for client in configuration.clients {
-                table.add_row(Row::new(vec![
-                    Cell::new(&client.name),
-                    Cell::new(&format!("{}", client.internal_address)),
-                    Cell::new(
-                        &client
-                            .allowed_ips
-                            .iter()
-                            .map(|ip| format!("{}", ip))
-                            .collect::<Vec<String>>()
-                            .join(","),
-                    ),
-                ]));
-            }
-
-            table.printstd();
+            handle_print(&config);
         }
         SubCommand::RemoveClient { client_name } => {
-            // TODO: fixme
-            let mut configuration =
+            let mut config =
                 Configuration::open(&args.config).expect("Failed to open configuration.");
 
-            if !configuration.remove_client_by_name(&client_name) {
-                eprintln!("Failed to find and remove client {}", client_name);
-                exit(1);
-            }
-
-            // TODO: properly handle errors
-            configuration
-                .save(&args.config)
-                .expect("Failed to save configuration.");
-            println!("Client {} removed", client_name);
+            handle_remove_client(&mut config, &client_name, &args.config);
         }
         SubCommand::RouterConfig => {
-            // TODO: fixme
-            let configuration =
-                Configuration::open(&args.config).expect("Failed to open configuration.");
+            let config = Configuration::open(&args.config).expect("Failed to open configuration.");
 
-            println!("{}\n", configuration.router.interface_str());
-
-            for client in configuration.clients {
-                println!("{}\n", configuration.router.peer_str(&client));
-            }
+            handle_router_config(&config);
         }
+    }
+}
+
+fn handle_add_client(
+    config: &mut Configuration,
+    out_config_path: &Path,
+    client_name: &str,
+    internal_address: Ipv4Addr,
+    allowed_ips: Vec<Ipv4Net>,
+    dns: Option<Ipv4Addr>,
+    persistent_keepalive: Option<usize>,
+    public_key: Option<String>,
+) {
+    // check if the client we are trying to add already exists
+    if config
+        .clients
+        .iter()
+        .any(|client| client.name == client_name)
+    {
+        eprintln!("Client {} already exists", client_name);
+        return;
+    }
+
+    // creating peer
+    let mut peer = Peer::new(client_name, internal_address)
+        .with_dns(dns)
+        .with_keepalive(persistent_keepalive)
+        .with_vec_allowed_ips(allowed_ips);
+
+    if let Some(public_key) = public_key {
+        peer.set_private_key(None);
+        peer.set_public_key(public_key);
+    }
+
+    // updating configuration
+    config.push_peer(peer);
+
+    config
+        .save(out_config_path)
+        .expect("Failed to save configuration.");
+
+    println!("Client added");
+}
+
+fn handle_client_config(config: &Configuration, client_name: &str) {
+    match config.client_by_name(client_name) {
+        // TODO: change API
+        Some(client) => println!(
+            "{}",
+            config.client_config(&client.name, &config.router).unwrap()
+        ),
+        None => println!("Could not find client {}", client_name),
+    }
+}
+
+fn handle_print(config: &Configuration) {
+    let mut table = Table::new();
+
+    table.add_row(Row::new(vec![
+        Cell::new("Name"),
+        Cell::new("Internal Address"),
+        Cell::new("Allowed IPs"),
+    ]));
+
+    table.add_row(Row::new(vec![
+        Cell::new(&config.router.name),
+        Cell::new(&format!("{}", config.router.internal_address)),
+        Cell::new(""),
+    ]));
+
+    for client in &config.clients {
+        table.add_row(Row::new(vec![
+            Cell::new(&client.name),
+            Cell::new(&format!("{}", client.internal_address)),
+            Cell::new(
+                &client
+                    .allowed_ips
+                    .iter()
+                    .map(|ip| format!("{}", ip))
+                    .collect::<Vec<String>>()
+                    .join(","),
+            ),
+        ]));
+    }
+
+    table.printstd();
+}
+
+fn handle_remove_client(config: &mut Configuration, client_name: &str, config_path: &Path) {
+    if !config.remove_client_by_name(&client_name) {
+        eprintln!("Failed to find and remove client {}", client_name);
+        exit(1);
+    }
+
+    // TODO: properly handle errors
+    config
+        .save(config_path)
+        .expect("Failed to save configuration.");
+
+    println!("Client {} removed", client_name);
+}
+
+fn handle_router_config(config: &Configuration) {
+    println!("{}\n", config.router.interface_str());
+
+    for client in &config.clients {
+        println!("{}\n", config.router.peer_str(&client));
     }
 }
