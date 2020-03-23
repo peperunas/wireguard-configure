@@ -86,7 +86,7 @@ fn main() {
             println!("{}", example_configuration());
         }
         SubCommand::List { configuration_path } => match Configuration::open(&configuration_path) {
-            Ok(config) => handle_print(&config),
+            Ok(config) => handle_list(&config),
             Err(e) => println!("Could not open configuration file: {}", e),
         },
         SubCommand::RemoveClient {
@@ -157,7 +157,7 @@ fn handle_client_config(config: &Configuration, client_name: &str) {
     }
 }
 
-fn handle_print(config: &Configuration) {
+fn handle_list(config: &Configuration) {
     let mut table = Table::new();
 
     table.add_row(Row::new(vec![
