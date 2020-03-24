@@ -1,5 +1,5 @@
-use ipnet::Ipv4Net;
-use std::net::Ipv4Addr;
+use ipnet::IpNet;
+use std::net::IpAddr;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -29,13 +29,13 @@ pub enum SubCommand {
         client_name: String,
         /// Internal address for the new client
         #[structopt(short = "i")]
-        internal_address: Ipv4Addr,
+        internal_address: IpAddr,
         /// A list of subnets to be routed through the VPN for this client (e.g 10.0.0.1/32)
         #[structopt(required = true, short = "a")]
-        allowed_ips: Vec<Ipv4Net>,
+        allowed_ips: Vec<IpNet>,
         /// The DNS server to use
         #[structopt(short, long)]
-        dns: Option<Ipv4Addr>,
+        dns: Option<IpAddr>,
         /// Persistent keepalive for the client
         #[structopt(short, long)]
         persistent_keepalive: Option<usize>,

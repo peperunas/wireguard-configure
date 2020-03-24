@@ -10,24 +10,24 @@ use crate::addrport::AddrPort;
 use crate::configuration::Configuration;
 use crate::endpoint::{Peer, Router};
 use args::{Arguments, SubCommand};
-use ipnet::Ipv4Net;
+use ipnet::IpNet;
 use prettytable::{Cell, Row, Table};
-use std::net::Ipv4Addr;
+use std::net::IpAddr;
 use std::path::Path;
-use std::process::exit;
 use structopt::StructOpt;
 
 fn example_configuration() -> Configuration {
     // Router
-    let router_ip: Ipv4Net = "10.0.1.1/24".parse().unwrap();
-    let router_subnet: Ipv4Net = "10.0.1.0/24".parse().unwrap();
+    let router_ip = "10.0.1.1/24".parse().unwrap();
+    let router_subnet = "10.0.1.0/24".parse().unwrap();
 
     // Client A
-    let client_a_ip: Ipv4Addr = "10.0.1.2".parse().unwrap();
-    let client_a_dns: Ipv4Addr = "10.0.1.1".parse().unwrap();
-    let client_a_allowed_ips: Ipv4Net = "0.0.0.0/0".parse().unwrap();
+    let client_a_ip = "10.0.1.2".parse().unwrap();
+    let client_a_dns = "10.0.1.1".parse().unwrap();
+    let client_a_allowed_ips = "0.0.0.0/0".parse().unwrap();
+
     // Client B
-    let client_b_ip: Ipv4Addr = "10.0.1.3".parse().unwrap();
+    let client_b_ip = "10.0.1.3".parse().unwrap();
 
     let router = Router::new("vpn-router", router_ip, AddrPort::new("vpn.com", 31337));
     let mut configuration = Configuration::new(router);
@@ -107,9 +107,9 @@ fn handle_add_client(
     config: &mut Configuration,
     out_config_path: &Path,
     client_name: &str,
-    internal_address: Ipv4Addr,
-    allowed_ips: Vec<Ipv4Net>,
-    dns: Option<Ipv4Addr>,
+    internal_address: IpAddr,
+    allowed_ips: Vec<IpNet>,
+    dns: Option<IpAddr>,
     persistent_keepalive: Option<usize>,
     public_key: Option<String>,
 ) {

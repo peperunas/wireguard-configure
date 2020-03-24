@@ -1,7 +1,7 @@
 use crate::addrport::AddrPort;
-use ipnet::Ipv4Net;
+use ipnet::IpNet;
 use std::io::Write;
-use std::net::Ipv4Addr;
+use std::net::IpAddr;
 use std::process::{Command, Stdio};
 
 fn gen_keys() -> Result<(String, String), std::io::Error> {
@@ -42,13 +42,13 @@ pub struct Router {
     pub private_key: String,
     pub public_key: String,
     pub external_address: AddrPort,
-    pub internal_address: Ipv4Net,
+    pub internal_address: IpNet,
 }
 
 impl Router {
     pub fn new<S: Into<String>>(
         name: S,
-        internal_address: Ipv4Net,
+        internal_address: IpNet,
         external_address: AddrPort,
     ) -> Router {
         // generating keypair by calling wg on the host system
@@ -67,7 +67,7 @@ impl Router {
         self.external_address = external_address;
     }
 
-    pub fn set_internal_address(&mut self, internal_address: Ipv4Net) {
+    pub fn set_internal_address(&mut self, internal_address: IpNet) {
         self.internal_address = internal_address;
     }
 
@@ -104,10 +104,7 @@ impl Router {
         lines.push(format!("PublicKey = {}", peer.public_key));
 
         // Allowed IPs
-        lines.push(format!(
-            "AllowedIPs = {}",
-            Ipv4Net::from(peer.internal_address)
-        ));
+        lines.push(format!("AllowedIPs = {}", peer.internal_address));
 
         lines.join("\n")
     }
@@ -115,9 +112,9 @@ impl Router {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Peer {
-    pub allowed_ips: Vec<Ipv4Net>,
-    pub dns: Option<Ipv4Addr>,
-    pub internal_address: Ipv4Addr,
+    pub allowed_ips: Vec<IpNet>,
+    pub dns: Option<IpAddr>,
+    pub internal_address: IpAddr,
     pub name: String,
     pub persistent_keepalive: Option<usize>,
     pub private_key: Option<String>,
@@ -125,7 +122,7 @@ pub struct Peer {
 }
 
 impl Peer {
-    pub fn new<S: Into<String>>(name: S, internal_address: Ipv4Addr) -> Peer {
+    pub fn new<S: Into<String>>(name: S, internal_address: IpAddr) -> Peer {
         // generating keypair by calling wg on the host system
         let (private_key, public_key) = gen_keys().expect("Error while generating key pair.");
 
@@ -144,7 +141,7 @@ impl Peer {
     // Builder functions
     //
 
-    pub fn with_dns(mut self, dns: Option<Ipv4Addr>) -> Peer {
+    pub fn with_dns(mut self, dns: Option<IpAddr>) -> Peer {
         self.dns = dns;
         self
     }
@@ -154,12 +151,12 @@ impl Peer {
         self
     }
 
-    pub fn with_vec_allowed_ips(mut self, allowed_ips: Vec<Ipv4Net>) -> Peer {
+    pub fn with_vec_allowed_ips(mut self, allowed_ips: Vec<IpNet>) -> Peer {
         self.allowed_ips = allowed_ips;
         self
     }
 
-    pub fn with_allowed_ips(mut self, allowed_ips: Ipv4Net) -> Peer {
+    pub fn with_allowed_ips(mut self, allowed_ips: IpNet) -> Peer {
         self.allowed_ips.push(allowed_ips);
         self
     }
@@ -168,11 +165,11 @@ impl Peer {
     // Setters
     //
 
-    pub fn push_allowed_ip(&mut self, allowed_ips: Ipv4Net) {
+    pub fn push_allowed_ip(&mut self, allowed_ips: IpNet) {
         self.allowed_ips.push(allowed_ips);
     }
 
-    pub fn set_internal_address(&mut self, internal_address: Ipv4Addr) {
+    pub fn set_internal_address(&mut self, internal_address: IpAddr) {
         self.internal_address = internal_address;
     }
 
@@ -243,7 +240,7 @@ impl Peer {
         if let Some(keepalive) = self.persistent_keepalive {
             lines.push(format!("PersistentKeepalive = {}", keepalive));
         }
-        
+
         // Allowed IPs
         lines.push(format!(
             "AllowedIPs = {}",
