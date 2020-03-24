@@ -115,10 +115,10 @@ impl Router {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Peer {
+    pub name: String,
+    pub internal_address: IpAddr,
     pub allowed_ips: Vec<IpNet>,
     pub dns: Option<IpAddr>,
-    pub internal_address: IpAddr,
-    pub name: String,
     pub persistent_keepalive: Option<usize>,
     pub private_key: Option<String>,
     pub public_key: String,
