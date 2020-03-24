@@ -81,7 +81,7 @@ impl Router {
         lines.push("[Interface]".to_string());
 
         // Internal address
-        lines.push(format!("Address = {}", self.internal_address));
+        lines.push(format!("Address = {}", IpNet::from(self.internal_address)));
 
         // Private key
         lines.push(format!("PrivateKey = {}", self.private_key));
@@ -104,7 +104,10 @@ impl Router {
         lines.push(format!("PublicKey = {}", peer.public_key));
 
         // Allowed IPs
-        lines.push(format!("AllowedIPs = {}", peer.internal_address));
+        lines.push(format!(
+            "AllowedIPs = {}",
+            IpNet::from(peer.internal_address)
+        ));
 
         lines.join("\n")
     }
@@ -204,7 +207,7 @@ impl Peer {
                 lines.push(format!("PrivateKey = {}", private_key));
 
                 // Internal address
-                lines.push(format!("Address = {}", self.internal_address));
+                lines.push(format!("Address = {}", IpNet::from(self.internal_address)));
 
                 // DNS, if any
                 if let Some(dns) = self.dns {
