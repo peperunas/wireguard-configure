@@ -39,10 +39,10 @@ fn gen_keys() -> Result<(String, String), std::io::Error> {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Router {
     pub name: String,
+    pub internal_address: IpNet,
+    pub external_address: AddrPort,
     pub private_key: String,
     pub public_key: String,
-    pub external_address: AddrPort,
-    pub internal_address: IpNet,
 }
 
 impl Router {
