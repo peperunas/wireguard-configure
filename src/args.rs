@@ -16,7 +16,7 @@ pub struct ConfigOpts {
     /// A configuration is named after its file stem.
     ///
     /// e.g: wg0 -> /etc/wireguard/wg0.toml 
-    #[structopt(name="configuration_name", required_unless = "custom-config-path")]
+    #[structopt(name="configuration-name", required_unless = "custom-config-path")]
     pub name: Option<String>,
 
     /// Use a manually specified configuration file
