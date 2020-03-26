@@ -10,21 +10,33 @@ pub struct Arguments {
     pub subcommand: SubCommand,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, StructOpt)]
+pub struct ConfigOpts {
+    /// wireguard-configure configuration name
+    ///
+    /// A configuration is named after its file stem.
+    /// The default behaviour is to look into /etc/wireguard/<name>.toml
+    #[structopt(required_unless = "custom_config_path")]
+    pub name: Option<String>,
+
+    /// Manually specified configuration file path
+    #[structopt(parse(from_os_str), short = "c", conflicts_with = "name")]
+    pub custom_config_path: Option<PathBuf>,
+}
+
 #[derive(StructOpt)]
 pub enum SubCommand {
     /// Generate an example configuration file
     GenerateExample,
     /// List clients in this configuration
     List {
-        /// wireguard-configure configuration file
-        #[structopt(parse(from_os_str))]
-        configuration_path: PathBuf,
+        #[structopt(flatten)]
+        config_opts: ConfigOpts,
     },
     /// Add a client to the configuration
     AddClient {
-        /// wireguard-configure configuration file
-        #[structopt(parse(from_os_str))]
-        configuration_path: PathBuf,
+        #[structopt(flatten)]
+        config_opts: ConfigOpts,
         /// Name of client to add
         client_name: String,
         /// Internal address for the new client
@@ -45,24 +57,21 @@ pub enum SubCommand {
     },
     /// Remove a client from the configuration
     RemoveClient {
-        /// wireguard-configure configuration file
-        #[structopt(parse(from_os_str))]
-        configuration_path: PathBuf,
+        #[structopt(flatten)]
+        config_opts: ConfigOpts,
         /// Name of client to remove
         #[structopt(required = true)]
         client_name: String,
     },
     /// Print the router configuration
     RouterConfig {
-        /// wireguard-configure configuration file
-        #[structopt(parse(from_os_str))]
-        configuration_path: PathBuf,
+        #[structopt(flatten)]
+        config_opts: ConfigOpts,
     },
     /// Print the client configuration
     ClientConfig {
-        /// wireguard-configure configuration file
-        #[structopt(parse(from_os_str))]
-        configuration_path: PathBuf,
+        #[structopt(flatten)]
+        config_opts: ConfigOpts,
         /// Name of the client's configuration to print
         client_name: String,
     },
