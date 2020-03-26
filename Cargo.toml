@@ -1,6 +1,6 @@
 [package]
 name = "wireguard-configure"
-version = "0.2.2"
+version = "0.2.3"
 authors = [
     "Alex Eubanks <endeavor@rainbowsandpwnies.com>",
     "Giulio De Pasquale <depasquale+github@giugl.io>"
