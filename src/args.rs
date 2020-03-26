@@ -12,16 +12,16 @@ pub struct Arguments {
 
 #[derive(Clone, Debug, Deserialize, Serialize, StructOpt)]
 pub struct ConfigOpts {
-    /// wireguard-configure configuration name
-    ///
+    /// A wireguard-configure configuration file name found in /etc/wireguard. The file must end in .toml.
     /// A configuration is named after its file stem.
-    /// The default behaviour is to look into /etc/wireguard/<name>.toml
-    #[structopt(required_unless = "custom_config_path")]
+    ///
+    /// e.g: wg0 -> /etc/wireguard/wg0.toml 
+    #[structopt(name="configuration_name", required_unless = "custom-config-path")]
     pub name: Option<String>,
 
-    /// Manually specified configuration file path
-    #[structopt(parse(from_os_str), short = "c", conflicts_with = "name")]
-    pub custom_config_path: Option<PathBuf>,
+    /// Use a manually specified configuration file
+    #[structopt(name="custom-config-path", parse(from_os_str), short = "c", conflicts_with = "name")]
+    pub path: Option<PathBuf>,
 }
 
 #[derive(StructOpt)]
