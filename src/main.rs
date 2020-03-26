@@ -12,6 +12,7 @@ use crate::endpoint::{Peer, Router};
 use args::{Arguments, SubCommand};
 use ipnet::IpNet;
 use prettytable::{Cell, Row, Table};
+use std::error::Error;
 use std::net::IpAddr;
 use std::path::Path;
 use structopt::StructOpt;
@@ -53,66 +54,86 @@ fn main() {
 
     match args.subcommand {
         SubCommand::AddClient {
-            configuration_path,
+            config_opts,
             client_name,
             internal_address,
             allowed_ips,
             dns,
             persistent_keepalive,
             public_key,
-        } => match Configuration::open(&configuration_path) {
+        } => match handle_configuration_open(&config_opts) {
             Ok(mut config) => handle_add_client(
                 &mut config,
-                &configuration_path,
                 &client_name,
                 internal_address,
                 allowed_ips,
                 dns,
                 persistent_keepalive,
                 public_key,
-            ),
+            )
+            .expect("Failed to add client."),
             Err(e) => println!("Could not open configuration file: {}", e),
         },
         SubCommand::ClientConfig {
-            configuration_path,
+            config_opts,
             client_name,
-        } => match Configuration::open(&configuration_path) {
+        } => match handle_configuration_open(&config_opts) {
             Ok(config) => handle_client_config(&config, &client_name),
             Err(e) => println!("Could not open configuration file: {}", e),
         },
         SubCommand::GenerateExample => {
             println!("{}", example_configuration());
         }
-        SubCommand::List { configuration_path } => match Configuration::open(&configuration_path) {
+        SubCommand::List { config_opts } => match handle_configuration_open(&config_opts) {
             Ok(config) => handle_list(&config),
             Err(e) => println!("Could not open configuration file: {}", e),
         },
         SubCommand::RemoveClient {
-            configuration_path,
+            config_opts,
             client_name,
-        } => match Configuration::open(&configuration_path) {
-            Ok(mut config) => handle_remove_client(&mut config, &client_name, &configuration_path),
+        } => match handle_configuration_open(&config_opts) {
+            Ok(mut config) => {
+                handle_remove_client(&mut config, &client_name).expect("Failed to remove client.")
+            }
+            Err(e) => println!("Could not open configuration file: {:?}", e),
+        },
+        SubCommand::RouterConfig { config_opts } => match handle_configuration_open(&config_opts) {
+            Ok(config) => handle_router_config(&config),
             Err(e) => println!("Could not open configuration file: {}", e),
         },
-        SubCommand::RouterConfig { configuration_path } => {
-            match Configuration::open(&configuration_path) {
-                Ok(config) => handle_router_config(&config),
-                Err(e) => println!("Could not open configuration file: {}", e),
-            }
-        }
     }
+}
+
+// Parses the configuration options.
+// If a configuration name is specified,
+// we try to open the configuration file in /etc/wireguard/<name>.toml.
+// If a configuration path is specified, we extract the configuration name
+// from the filename itself and open the config file itself.
+fn handle_configuration_open(
+    config_opts: &args::ConfigOpts,
+) -> Result<Configuration, Box<dyn Error>> {
+    if let Some(config_name) = &config_opts.name {
+        return Configuration::from_name(config_name);
+    }
+
+    if let Some(config_path) = &config_opts.path {
+        return Configuration::from_path(&config_path);
+    }
+
+    // no further checks are done since clap is doing the heavy lifting
+    // we shouldn't get here, theoretically
+    Err("No configuration name or path have been specified.")?
 }
 
 fn handle_add_client(
     config: &mut Configuration,
-    out_config_path: &Path,
     client_name: &str,
     internal_address: IpAddr,
     allowed_ips: Vec<IpNet>,
     dns: Option<IpAddr>,
     persistent_keepalive: Option<usize>,
     public_key: Option<String>,
-) {
+) -> Result<(), Box<dyn Error>> {
     // check if the client we are trying to add already exists
     if config
         .clients
@@ -120,7 +141,7 @@ fn handle_add_client(
         .any(|client| client.name == client_name)
     {
         eprintln!("Client {} already exists", client_name);
-        return;
+        return Ok(());
     }
 
     // creating peer
@@ -137,11 +158,11 @@ fn handle_add_client(
     // updating configuration
     config.push_peer(peer);
 
-    config
-        .save(out_config_path)
-        .expect("Failed to save configuration.");
+    config.save()?;
 
     println!("Client added");
+
+    Ok(())
 }
 
 fn handle_client_config(config: &Configuration, client_name: &str) {
@@ -184,22 +205,24 @@ fn handle_list(config: &Configuration) {
     table.printstd();
 }
 
-fn handle_remove_client(config: &mut Configuration, client_name: &str, config_path: &Path) {
+fn handle_remove_client(
+    config: &mut Configuration,
+    client_name: &str,
+) -> Result<(), Box<dyn Error>> {
     let old_clients_len = config.clients.len();
 
     config.clients.retain(|x| x.name != client_name);
 
     if config.clients.len() == old_clients_len {
         println!("Could not find and remove client \"{}\"", client_name);
-        return;
+        return Ok(());
     }
 
-    // TODO: properly handle errors
-    config
-        .save(config_path)
-        .expect("Failed to save configuration.");
+    config.save()?;
 
     println!("Client {} removed", client_name);
+
+    Ok(())
 }
 
 fn handle_router_config(config: &Configuration) {
