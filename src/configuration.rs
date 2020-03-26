@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 
 use crate::args::ConfigOpts;
 
-pub const WIREGUARD_CONFIG_PATH: &Path = &Path::new("/etc/wireguard");
+pub const WIREGUARD_CONFIG_PATH: &str = "/etc/wireguard";
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {
@@ -34,10 +34,6 @@ impl Configuration {
     pub fn from_path(path: &Path) -> Result<Configuration, Box<dyn Error>> {
         let mut file = File::open(path)?;
         let mut buffer: String = String::new();
-
-        if !path.is_file() {
-            return Err("The provided path is not a file.")?;
-        }
 
         let extension = path
             .extension()
@@ -66,20 +62,18 @@ impl Configuration {
         Ok(config)
     }
 
-    pub fn from_name(name: String) -> Result<Configuration, Box<dyn Error>> {
-        // Building configuration file path from name.
-        // Checking if the configuration file exists
-        // in the configuration folder, and if so,
-        // parsing its contents.
-        let config_path = WIREGUARD_CONFIG_PATH.to_path_buf();
 
-        // appending file stem and extension
-        config_path.push(format!("{}.toml", name));
+    pub fn from_name(name: &str) -> Result<Configuration, Box<dyn Error>> {
+        let mut config_path = PathBuf::from(WIREGUARD_CONFIG_PATH);
+        
+        // appending file stem and extension to configuration folder path
+        config_path.push(name);
+        config_path.set_extension("toml");
 
         // checking if file exists
         if !config_path.is_file() {
             return Err(format!(
-                "The configuration file {} does not exist.",
+                "{} is not a file",
                 config_path.to_str().unwrap()
             ))?;
         }
@@ -87,8 +81,17 @@ impl Configuration {
         Configuration::from_path(&config_path)
     }
 
-    pub fn save(&self, path: &Path) -> Result<(), std::io::Error> {
-        let mut file = File::create(path)?;
+    pub fn save(&self) -> Result<(), Box<dyn Error>> {
+        // extracting path from metadata
+        let path = match &self.metadata {
+            None => return Err("Configuration metadata not found.")?,
+            Some(metadata) => match &metadata.path {
+                None => return Err("No path defined for this configuration.")?,
+                Some(path) => path,
+            },
+        };
+        
+        let mut file = File::open(path)?;
 
         let bytes = serde_yaml::to_string(&self).expect("Failed to serialize configuration");
 
@@ -109,12 +112,12 @@ impl Configuration {
     where
         S: ToString,
     {
-        match self.metadata {
+        match &mut self.metadata {
             Some(metadata) => metadata.name = Some(name.to_string()),
             None => {
                 self.metadata = Some(ConfigOpts {
                     name: Some(name.to_string()),
-                    custom_config_path: None,
+                    path: None,
                 })
             }
         }
@@ -123,12 +126,12 @@ impl Configuration {
     }
 
     pub fn with_path(mut self, path: &Path) -> Configuration {
-        match self.metadata {
-            Some(metadata) => metadata.custom_config_path = Some(path.to_path_buf()),
+        match &mut self.metadata {
+            Some(metadata) => metadata.path = Some(path.to_path_buf()),
             None => {
                 self.metadata = Some(ConfigOpts {
                     name: None,
-                    custom_config_path: Some(path.to_path_buf()),
+                    path: Some(path.to_path_buf()),
                 })
             }
         }
