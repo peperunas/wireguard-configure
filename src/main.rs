@@ -110,9 +110,10 @@ fn main() {
 // If a configuration path is specified, we extract the configuration name
 // from the filename itself and open the config file itself.
 fn handle_configuration_open(
-    config_opts: &args::ConfigOpts,
+    config_opts: &configuration::ConfigOpts,
 ) -> Result<Configuration, Box<dyn Error>> {
     if let Some(config_name) = &config_opts.name {
+        print!("Opening /etc/wireguard/{}.toml", config_name);
         return Configuration::from_name(config_name);
     }
 

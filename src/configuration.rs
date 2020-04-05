@@ -1,15 +1,27 @@
 use crate::endpoint::{Peer, Router};
-use ipnet::Ipv4Net;
 use serde_yaml;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-
-use crate::args::ConfigOpts;
+use structopt::StructOpt;
 
 pub const WIREGUARD_CONFIG_PATH: &str = "/etc/wireguard";
+
+#[derive(Clone, Debug, Deserialize, Serialize, StructOpt)]
+pub struct ConfigOpts {
+    /// A wireguard-configure configuration file name found in /etc/wireguard. The file must end in .toml.
+    /// A configuration is named after its file stem.
+    ///
+    /// e.g: wg0 -> /etc/wireguard/wg0.toml
+    #[structopt(name = "configuration-name", required_unless = "custom-config-path")]
+    pub name: Option<String>,
+
+    /// Use a manually specified configuration file
+    #[structopt(name = "custom-config-path", parse(from_os_str), short = "c")]
+    pub path: Option<PathBuf>,
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Configuration {
@@ -62,20 +74,15 @@ impl Configuration {
         Ok(config)
     }
 
-
     pub fn from_name(name: &str) -> Result<Configuration, Box<dyn Error>> {
         let mut config_path = PathBuf::from(WIREGUARD_CONFIG_PATH);
-        
         // appending file stem and extension to configuration folder path
         config_path.push(name);
         config_path.set_extension("toml");
 
         // checking if file exists
         if !config_path.is_file() {
-            return Err(format!(
-                "{} is not a file",
-                config_path.to_str().unwrap()
-            ))?;
+            return Err(format!("{} is not a file", config_path.to_str().unwrap()))?;
         }
 
         Configuration::from_path(&config_path)
@@ -90,7 +97,6 @@ impl Configuration {
                 Some(path) => path,
             },
         };
-        
         let mut file = File::open(path)?;
 
         let bytes = serde_yaml::to_string(&self).expect("Failed to serialize configuration");

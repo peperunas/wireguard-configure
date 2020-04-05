@@ -1,6 +1,6 @@
+use crate::configuration::ConfigOpts;
 use ipnet::IpNet;
 use std::net::IpAddr;
-use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
@@ -8,20 +8,6 @@ use structopt::StructOpt;
 pub struct Arguments {
     #[structopt(subcommand)]
     pub subcommand: SubCommand,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, StructOpt)]
-pub struct ConfigOpts {
-    /// A wireguard-configure configuration file name found in /etc/wireguard. The file must end in .toml.
-    /// A configuration is named after its file stem.
-    ///
-    /// e.g: wg0 -> /etc/wireguard/wg0.toml 
-    #[structopt(name="configuration-name", required_unless = "custom-config-path")]
-    pub name: Option<String>,
-
-    /// Use a manually specified configuration file
-    #[structopt(name="custom-config-path", parse(from_os_str), short = "c", conflicts_with = "name")]
-    pub path: Option<PathBuf>,
 }
 
 #[derive(StructOpt)]
