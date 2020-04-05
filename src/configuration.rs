@@ -2,7 +2,7 @@ use crate::endpoint::{Peer, Router};
 use serde_yaml;
 use std::error::Error;
 use std::fmt;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -19,7 +19,12 @@ pub struct ConfigOpts {
     pub name: Option<String>,
 
     /// Use a manually specified configuration file
-    #[structopt(name = "custom-config-path", parse(from_os_str), short = "c")]
+    #[structopt(
+        name = "custom-config-path",
+        parse(from_os_str),
+        short = "c",
+        overrides_with = "configuration-name"
+    )]
     pub path: Option<PathBuf>,
 }
 
@@ -97,8 +102,8 @@ impl Configuration {
                 Some(path) => path,
             },
         };
-        let mut file = File::open(path)?;
 
+        let mut file = OpenOptions::new().read(true).write(true).open(path)?;
         let bytes = serde_yaml::to_string(&self).expect("Failed to serialize configuration");
 
         file.write_all(bytes.as_bytes())?;
