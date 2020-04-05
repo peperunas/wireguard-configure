@@ -49,6 +49,8 @@ impl fmt::Display for Configuration {
 
 impl Configuration {
     pub fn from_path(path: &Path) -> Result<Configuration, Box<dyn Error>> {
+        println!("Opening {:?}", path);
+
         let mut file = File::open(path)?;
         let mut buffer: String = String::new();
 
@@ -84,6 +86,8 @@ impl Configuration {
         // appending file stem and extension to configuration folder path
         config_path.push(name);
         config_path.set_extension("toml");
+
+        println!("Opening {:?}", config_path);
 
         // checking if file exists
         if !config_path.is_file() {
