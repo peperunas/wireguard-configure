@@ -99,6 +99,10 @@ pub struct Router {
     pub public_key: String,
     pub mtu: Option<u16>,
     pub table: Option<TableType>,
+    pub preup: Option<String>,
+    pub postup: Option<String>,
+    pub predown: Option<String>,
+    pub postdown: Option<String>,
 }
 
 impl Router {
@@ -118,6 +122,10 @@ impl Router {
             internal_address,
             mtu: None,
             table: None,
+            preup: None,
+            postup: None,
+            predown: None,
+            postdown: None,
         }
     }
 
@@ -132,6 +140,26 @@ impl Router {
 
     pub fn with_table(mut self, table: Option<TableType>) -> Router {
         self.table = table;
+        self
+    }
+
+    pub fn with_preup(mut self, preup: Option<String>) -> Router {
+        self.preup = preup;
+        self
+    }
+
+    pub fn with_postup(mut self, postup: Option<String>) -> Router {
+        self.postup = postup;
+        self
+    }
+
+    pub fn with_predown(mut self, predown: Option<String>) -> Router {
+        self.predown = predown;
+        self
+    }
+
+    pub fn with_postdown(mut self, postdown: Option<String>) -> Router {
+        self.postdown = postdown;
         self
     }
 
@@ -179,6 +207,26 @@ impl Router {
             lines.push(format!("Table = {}", table));
         }
 
+        // PreUp, if any
+        if let Some(preup) = &self.preup {
+            lines.push(format!("PreUp = {}", preup));
+        }
+
+        // PostUp, if any
+        if let Some(postup) = &self.postup {
+            lines.push(format!("PostUp = {}", postup));
+        }
+
+        // PreDown, if any
+        if let Some(predown) = &self.predown {
+            lines.push(format!("PreDown = {}", predown));
+        }
+
+        // PostDown, if any
+        if let Some(postdown) = &self.postdown {
+            lines.push(format!("PostDown = {}", postdown));
+        }
+
         lines.join("\n")
     }
 
@@ -215,6 +263,10 @@ pub struct Peer {
     pub public_key: String,
     pub mtu: Option<u16>,
     pub table: Option<TableType>,
+    pub preup: Option<String>,
+    pub postup: Option<String>,
+    pub predown: Option<String>,
+    pub postdown: Option<String>,
 }
 
 impl Peer {
@@ -232,6 +284,10 @@ impl Peer {
             persistent_keepalive: None,
             mtu: None,
             table: None,
+            preup: None,
+            postup: None,
+            predown: None,
+            postdown: None,
         }
     }
 
@@ -327,6 +383,25 @@ impl Peer {
                 // Table, if any
                 if let Some(table) = &self.table {
                     lines.push(format!("Table = {}", table));
+                }
+                // PreUp, if any
+                if let Some(preup) = &self.preup {
+                    lines.push(format!("PreUp = {}", preup));
+                }
+
+                // PostUp, if any
+                if let Some(postup) = &self.postup {
+                    lines.push(format!("PostUp = {}", postup));
+                }
+
+                // PreDown, if any
+                if let Some(predown) = &self.predown {
+                    lines.push(format!("PreDown = {}", predown));
+                }
+
+                // PostDown, if any
+                if let Some(postdown) = &self.postdown {
+                    lines.push(format!("PostDown = {}", postdown));
                 }
 
                 Some(lines.join("\n"))
