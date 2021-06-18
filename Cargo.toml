@@ -16,8 +16,8 @@ clap = "2.33.0"
 error-chain = "0.12"
 ipnet = { version = "2.3.0", features = ["serde"] }
 prettytable-rs = "0.8.0"
-serde = "1.0.106"
-serde_derive = "1.0.106"
+serde = "1.0.126"
+serde_derive = "1.0.126"
 serde_yaml = "0.8.17"
 structopt= "0.3.12"
 
