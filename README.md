@@ -34,34 +34,55 @@ Generate an example configuration file, run `wireguard-configure generate-exampl
 
 The generated configuration file should look like this:
 
-```
+```yaml
 ---
 router:
-  name: "vpn-router"
-  private_key: "wPbMYTCgGzfkg3vlt3xoVLhbozRpvVmM8mkm6PFB1Us="
-  public_key: "rQNYShmaF+KI+JdvblFSPxmW5f/GAj7F0qBFwMsztVs="
+  name: vpn-router
+  internal_address: 10.0.1.1/24
   external_address:
     address: vpn.com
     port: 31337
-  internal_address: 10.0.1.1/24
+  private_key: MB/DmnzL121iCuMqHJQo0dMfSwh0gpWcm3immT2jOE4=
+  public_key: os7mzFUnwULeXHBS49k8/yVh06s+xidgS7n0Q4PbcEY=
+  mtu: ~
+  table: ~
+  preup: ~
+  postup: ~
+  predown: ~
+  postdown: ~
 clients:
-  - name: "client-a"
-    private_key: "aJQEvc6VUDhGjFr5kHqJaSDMHcVaRFniKHxShx3JiV4="
-    public_key: "a8LCjRe7oLdxLdHS1CmGqG9L813TAnMnnEzRTBXkHzM="
+  - name: client-a
     internal_address: 10.0.1.2
-    dns: 10.0.1.1
     allowed_ips:
       - 0.0.0.0/0
+    dns: 10.0.1.1
     persistent_keepalive: 25
-  - name: "client-b"
-    private_key: "mGnpzl6bP/zSJ5x04xNF/AxgHlGTOlPNNCmtRUIyO1U="
-    public_key: "rCMWJp3RMXgx/cgWAohhSYJBG3+SQD2hhFcBd0eVwmg="
+    private_key: MMSJGtzxrqnaTWQMeltmxgHhSKEAQF/6ohzMSQSUmFo=
+    public_key: U5n1qprDaMC7FJ3rsnMi906nY2OP9nWDIA278zdf0DQ=
+    mtu: ~
+    table: ~
+    preup: ~
+    postup: ~
+    predown: ~
+    postdown: ~
+  - name: client-b
     internal_address: 10.0.1.3
-    dns: ~
     allowed_ips:
       - 10.0.1.0/24
+    dns: ~
     persistent_keepalive: 25
+    private_key: EMuzMFiJwq0NleRbw0qg5Bie+5TfyP2eNQLUGS5uFlY=
+    public_key: ideBHvZpgUiTzDOnA7MVHmeyFINjFHDNIqBgvdgYEgo=
+    mtu: ~
+    table: ~
+    preup: ~
+    postup: ~
+    predown: ~
+    postdown: ~
+
 ```
+
+If a configuration is saved under `/etc/wireguard` **with .yaml extension**, `wireguard-configure` will recognize the configuration by its name when using any command.
 
 ## Adding a new client
 
