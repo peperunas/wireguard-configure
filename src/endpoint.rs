@@ -12,7 +12,7 @@ use std::process::{Command, Stdio};
 pub enum TableType {
     Off,
     Auto,
-    Custom(u16),
+    Custom(u32),
 }
 
 impl<'de> Deserialize<'de> for TableType {
