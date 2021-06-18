@@ -43,6 +43,7 @@ pub struct Router {
     pub external_address: AddrPort,
     pub private_key: String,
     pub public_key: String,
+    pub mtu: Option<u16>,
 }
 
 impl Router {
@@ -60,8 +61,22 @@ impl Router {
             public_key,
             external_address,
             internal_address,
+            mtu: None,
         }
     }
+
+    /*
+     * Builder functions
+     */
+
+    pub fn with_mtu(mut self, mtu: Option<u16>) -> Router {
+        self.mtu = mtu;
+        self
+    }
+
+    /*
+     * Setters
+     */
 
     pub fn set_external_address(&mut self, external_address: AddrPort) {
         self.external_address = external_address;
@@ -70,6 +85,10 @@ impl Router {
     pub fn set_internal_address(&mut self, internal_address: IpNet) {
         self.internal_address = internal_address;
     }
+
+    /*
+     *
+     */
 
     pub fn interface_str(&self) -> String {
         let mut lines: Vec<String> = Vec::new();
@@ -88,6 +107,11 @@ impl Router {
 
         // Listen port
         lines.push(format!("ListenPort = {}", self.external_address.port));
+
+        if let Some(mtu) = self.mtu {
+            lines.push(format!("MTU = {}", mtu));
+        }
+
         lines.join("\n")
     }
 
@@ -122,6 +146,7 @@ pub struct Peer {
     pub persistent_keepalive: Option<usize>,
     pub private_key: Option<String>,
     pub public_key: String,
+    pub mtu: Option<u16>,
 }
 
 impl Peer {
@@ -137,6 +162,7 @@ impl Peer {
             dns: None,
             allowed_ips: Vec::new(),
             persistent_keepalive: None,
+            mtu: None,
         }
     }
 
@@ -161,6 +187,11 @@ impl Peer {
 
     pub fn with_allowed_ips(mut self, allowed_ips: IpNet) -> Peer {
         self.allowed_ips.push(allowed_ips);
+        self
+    }
+
+    pub fn with_mtu(mut self, mtu: Option<u16>) -> Peer {
+        self.mtu = mtu;
         self
     }
 
@@ -212,6 +243,11 @@ impl Peer {
                 // DNS, if any
                 if let Some(dns) = self.dns {
                     lines.push(format!("DNS = {}", dns));
+                }
+
+                // MTU, if any
+                if let Some(mtu) = self.mtu {
+                    lines.push(format!("MTU = {}", mtu));
                 }
 
                 Some(lines.join("\n"))
