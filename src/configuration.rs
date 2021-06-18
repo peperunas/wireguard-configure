@@ -52,14 +52,6 @@ impl Configuration {
         let mut file = File::open(path)?;
         let mut buffer: String = String::new();
 
-        let extension = path
-            .extension()
-            .expect("The provided path has an invalid extension.");
-
-        if extension != "toml" {
-            return Err("The provided path does not end in .toml")?;
-        }
-
         // extracting the configuration name from the file stem, if valid
         let config_name = path
             .file_stem()
@@ -81,13 +73,19 @@ impl Configuration {
 
     pub fn from_name(name: &str) -> Result<Configuration, Box<dyn Error>> {
         let mut config_path = PathBuf::from(WIREGUARD_CONFIG_PATH);
+
         // appending file stem and extension to configuration folder path
         config_path.push(name);
-        config_path.set_extension("toml");
+        config_path.set_extension("yaml");
 
         // checking if file exists
         if !config_path.is_file() {
-            return Err(format!("{} is not a file", config_path.to_str().unwrap()))?;
+            // try yml as well
+            config_path.set_extension("yml");
+
+            if !config_path.is_file() {
+                return Err(format!("{} does not exist", config_path.to_str().unwrap()))?;
+            }
         }
 
         Configuration::from_path(&config_path)
