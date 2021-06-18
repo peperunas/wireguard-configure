@@ -14,7 +14,6 @@ use ipnet::IpNet;
 use prettytable::{Cell, Row, Table};
 use std::error::Error;
 use std::net::IpAddr;
-use std::path::Path;
 use structopt::StructOpt;
 
 fn example_configuration() -> Configuration {
