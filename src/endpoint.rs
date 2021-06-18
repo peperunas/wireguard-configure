@@ -1,8 +1,62 @@
 use crate::addrport::AddrPort;
 use ipnet::IpNet;
+use serde::de::Visitor;
+use serde::Deserialize;
+use serde::Deserializer;
+use std::fmt::Display;
 use std::io::Write;
 use std::net::IpAddr;
 use std::process::{Command, Stdio};
+
+#[derive(Clone, Debug, Serialize)]
+pub enum TableType {
+    Off,
+    Auto,
+    Custom(u16),
+}
+
+impl<'de> Deserialize<'de> for TableType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct TableTypeVisitor;
+
+        impl<'a> Visitor<'a> for TableTypeVisitor {
+            type Value = TableType;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(formatter, "off, auto or a table number")
+            }
+
+            fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
+                match v.to_lowercase().as_str() {
+                    "off" => Ok(TableType::Off),
+                    "auto" => Ok(TableType::Auto),
+                    x => {
+                        let value = x.parse().map_err(serde::de::Error::custom)?;
+
+                        Ok(TableType::Custom(value))
+                    }
+                }
+            }
+        }
+
+        deserializer.deserialize_string(TableTypeVisitor)
+    }
+}
+
+impl Display for TableType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        let out = match self {
+            Self::Off => "off".to_owned(),
+            Self::Auto => "auto".to_owned(),
+            Self::Custom(value) => value.to_string(),
+        };
+
+        write!(f, "{}", out)
+    }
+}
 
 fn gen_keys() -> Result<(String, String), std::io::Error> {
     let output = Command::new("wg").args(&["genkey"]).output()?;
@@ -44,6 +98,7 @@ pub struct Router {
     pub private_key: String,
     pub public_key: String,
     pub mtu: Option<u16>,
+    pub table: Option<TableType>,
 }
 
 impl Router {
@@ -62,6 +117,7 @@ impl Router {
             external_address,
             internal_address,
             mtu: None,
+            table: None,
         }
     }
 
@@ -71,6 +127,11 @@ impl Router {
 
     pub fn with_mtu(mut self, mtu: Option<u16>) -> Router {
         self.mtu = mtu;
+        self
+    }
+
+    pub fn with_table(mut self, table: Option<TableType>) -> Router {
+        self.table = table;
         self
     }
 
@@ -108,8 +169,14 @@ impl Router {
         // Listen port
         lines.push(format!("ListenPort = {}", self.external_address.port));
 
+        // MTU, if any
         if let Some(mtu) = self.mtu {
             lines.push(format!("MTU = {}", mtu));
+        }
+
+        // Table, if any
+        if let Some(table) = &self.table {
+            lines.push(format!("Table = {}", table));
         }
 
         lines.join("\n")
@@ -147,6 +214,7 @@ pub struct Peer {
     pub private_key: Option<String>,
     pub public_key: String,
     pub mtu: Option<u16>,
+    pub table: Option<TableType>,
 }
 
 impl Peer {
@@ -163,6 +231,7 @@ impl Peer {
             allowed_ips: Vec::new(),
             persistent_keepalive: None,
             mtu: None,
+            table: None,
         }
     }
 
@@ -192,6 +261,11 @@ impl Peer {
 
     pub fn with_mtu(mut self, mtu: Option<u16>) -> Peer {
         self.mtu = mtu;
+        self
+    }
+
+    pub fn with_table(mut self, table: Option<TableType>) -> Peer {
+        self.table = table;
         self
     }
 
@@ -248,6 +322,11 @@ impl Peer {
                 // MTU, if any
                 if let Some(mtu) = self.mtu {
                     lines.push(format!("MTU = {}", mtu));
+                }
+
+                // Table, if any
+                if let Some(table) = &self.table {
+                    lines.push(format!("Table = {}", table));
                 }
 
                 Some(lines.join("\n"))
