@@ -1,6 +1,6 @@
-use crate::configuration::ConfigOpts;
 use ipnet::IpNet;
 use std::net::IpAddr;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
@@ -8,6 +8,14 @@ use structopt::StructOpt;
 pub struct Arguments {
     #[structopt(subcommand)]
     pub subcommand: SubCommand,
+    /// Configuration file to use
+    #[structopt(
+        name = "configuration-file",
+        parse(from_os_str),
+        short = "c",
+        overrides_with = "configuration-name"
+    )]
+    pub config: Option<PathBuf>,
 }
 
 #[derive(StructOpt)]
@@ -15,14 +23,9 @@ pub enum SubCommand {
     /// Generate an example configuration file
     GenerateExample,
     /// List clients in this configuration
-    List {
-        #[structopt(flatten)]
-        config_opts: ConfigOpts,
-    },
+    List,
     /// Add a client to the configuration
     AddClient {
-        #[structopt(flatten)]
-        config_opts: ConfigOpts,
         /// Name of client to add
         client_name: String,
         /// Internal address for the new client
@@ -43,21 +46,14 @@ pub enum SubCommand {
     },
     /// Remove a client from the configuration
     RemoveClient {
-        #[structopt(flatten)]
-        config_opts: ConfigOpts,
         /// Name of client to remove
         #[structopt(required = true)]
         client_name: String,
     },
     /// Print the router configuration
-    RouterConfig {
-        #[structopt(flatten)]
-        config_opts: ConfigOpts,
-    },
+    RouterConfig,
     /// Print the client configuration
     ClientConfig {
-        #[structopt(flatten)]
-        config_opts: ConfigOpts,
         /// Name of the client's configuration to print
         client_name: String,
     },

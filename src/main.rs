@@ -10,9 +10,11 @@ use crate::addrport::AddrPort;
 use crate::configuration::Configuration;
 use crate::endpoint::{Peer, Router};
 use args::{Arguments, SubCommand};
+use atty::Stream;
 use ipnet::IpNet;
 use prettytable::{Cell, Row, Table};
 use std::error::Error;
+use std::io::Read;
 use std::net::IpAddr;
 use structopt::StructOpt;
 
@@ -48,20 +50,45 @@ fn example_configuration() -> Configuration {
     configuration
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let args = Arguments::from_args();
+
+    if let SubCommand::GenerateExample = args.subcommand {
+        println!("{}", example_configuration());
+        return Ok(());
+    }
+
+    // retrieve configuration either from config file (if specified) or stdin
+    let mut config = match args.config {
+        // from config file
+        Some(config) => Configuration::from_path(&config)?,
+        // from stdin
+        None => {
+            // check if we are a tty
+            if is_tty() {
+                println!("No configuration opened. Select a configuration file or pipe a configuration to stdin.");
+                return Ok(());
+            }
+
+            let stdin = std::io::stdin();
+            let mut stdin_data = String::new();
+
+            stdin.lock().read_to_string(&mut stdin_data)?;
+
+            serde_yaml::from_str(&stdin_data)?
+        }
+    };
 
     match args.subcommand {
         SubCommand::AddClient {
-            config_opts,
             client_name,
             internal_address,
             allowed_ips,
             dns,
             persistent_keepalive,
             public_key,
-        } => match handle_configuration_open(&config_opts) {
-            Ok(mut config) => handle_add_client(
+        } => {
+            handle_add_client(
                 &mut config,
                 &client_name,
                 internal_address,
@@ -70,58 +97,32 @@ fn main() {
                 persistent_keepalive,
                 public_key,
             )
-            .expect("Failed to add client."),
-            Err(e) => println!("Could not open configuration file: {}", e),
-        },
-        SubCommand::ClientConfig {
-            config_opts,
-            client_name,
-        } => match handle_configuration_open(&config_opts) {
-            Ok(config) => handle_client_config(&config, &client_name),
-            Err(e) => println!("Could not open configuration file: {}", e),
-        },
+            .expect("Failed to add client.");
+
+            Ok(())
+        }
+        SubCommand::ClientConfig { client_name } => {
+            handle_client_config(&config, &client_name);
+            Ok(())
+        }
+        // TODO: ugly
         SubCommand::GenerateExample => {
             println!("{}", example_configuration());
+            Ok(())
         }
-        SubCommand::List { config_opts } => match handle_configuration_open(&config_opts) {
-            Ok(config) => handle_list(&config),
-            Err(e) => println!("Could not open configuration file: {}", e),
-        },
-        SubCommand::RemoveClient {
-            config_opts,
-            client_name,
-        } => match handle_configuration_open(&config_opts) {
-            Ok(mut config) => {
-                handle_remove_client(&mut config, &client_name).expect("Failed to remove client.")
-            }
-            Err(e) => println!("Could not open configuration file: {:?}", e),
-        },
-        SubCommand::RouterConfig { config_opts } => match handle_configuration_open(&config_opts) {
-            Ok(config) => handle_router_config(&config),
-            Err(e) => println!("Could not open configuration file: {}", e),
-        },
+        SubCommand::List => {
+            handle_list(&config);
+            Ok(())
+        }
+        SubCommand::RemoveClient { client_name } => {
+            handle_remove_client(&mut config, &client_name).expect("Failed to remove client.");
+            Ok(())
+        }
+        SubCommand::RouterConfig => {
+            handle_router_config(&config);
+            Ok(())
+        }
     }
-}
-
-// Parses the configuration options.
-// If a configuration name is specified,
-// we try to open the configuration file in /etc/wireguard/<name>.toml.
-// If a configuration path is specified, we extract the configuration name
-// from the filename itself and open the config file itself.
-fn handle_configuration_open(
-    config_opts: &configuration::ConfigOpts,
-) -> Result<Configuration, Box<dyn Error>> {
-    if let Some(config_name) = &config_opts.name {
-        return Configuration::from_name(config_name);
-    }
-
-    if let Some(config_path) = &config_opts.path {
-        return Configuration::from_path(&config_path);
-    }
-
-    // no further checks are done since clap is doing the heavy lifting
-    // we shouldn't get here, theoretically
-    Err("No configuration name or path have been specified.")?
 }
 
 fn handle_add_client(
@@ -159,7 +160,9 @@ fn handle_add_client(
 
     config.save()?;
 
-    println!("Client added");
+    if !config.is_from_tty() {
+        println!("Client added");
+    }
 
     Ok(())
 }
@@ -219,7 +222,9 @@ fn handle_remove_client(
 
     config.save()?;
 
-    println!("Client {} removed", client_name);
+    if !config.is_from_tty() {
+        println!("Client {} removed", client_name);
+    }
 
     Ok(())
 }
@@ -230,4 +235,8 @@ fn handle_router_config(config: &Configuration) {
     for client in &config.clients {
         println!("{}\n", config.router.peer_str(&client));
     }
+}
+
+fn is_tty() -> bool {
+    atty::is(Stream::Stdin)
 }

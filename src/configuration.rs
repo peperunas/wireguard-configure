@@ -7,9 +7,8 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
-pub const WIREGUARD_CONFIG_PATH: &str = "/etc/wireguard";
-
 #[derive(Clone, Debug, Deserialize, Serialize, StructOpt)]
+#[structopt(flatten)]
 pub struct ConfigOpts {
     /// A wireguard-configure configuration file name found in /etc/wireguard. The file must end in .toml.
     /// A configuration is named after its file stem.
@@ -71,27 +70,12 @@ impl Configuration {
         Ok(config)
     }
 
-    pub fn from_name(name: &str) -> Result<Configuration, Box<dyn Error>> {
-        let mut config_path = PathBuf::from(WIREGUARD_CONFIG_PATH);
-
-        // appending file stem and extension to configuration folder path
-        config_path.push(name);
-        config_path.set_extension("yaml");
-
-        // checking if file exists
-        if !config_path.is_file() {
-            // try yml as well
-            config_path.set_extension("yml");
-
-            if !config_path.is_file() {
-                return Err(format!("{} does not exist", config_path.to_str().unwrap()))?;
-            }
+    pub fn save(&self) -> Result<(), Box<dyn Error>> {
+        if self.is_from_tty() {
+            println!("{}", self);
+            return Ok(());
         }
 
-        Configuration::from_path(&config_path)
-    }
-
-    pub fn save(&self) -> Result<(), Box<dyn Error>> {
         // extracting path from metadata
         let path = match &self.metadata {
             None => return Err("Configuration metadata not found.")?,
@@ -105,7 +89,6 @@ impl Configuration {
         let bytes = serde_yaml::to_string(&self).expect("Failed to serialize configuration");
 
         file.write_all(bytes.as_bytes())?;
-
         Ok(())
     }
 
@@ -162,5 +145,9 @@ impl Configuration {
         client
             .interface_str()
             .map(|interface| format!("{}\n\n{}", interface, client.peer_str(&self.router)))
+    }
+
+    pub fn is_from_tty(&self) -> bool {
+        self.metadata.is_none()
     }
 }
